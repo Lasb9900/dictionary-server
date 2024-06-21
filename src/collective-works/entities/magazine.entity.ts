@@ -30,7 +30,13 @@ export class Magazine {
   @Prop({ required: true })
   originalLanguage: string;
 
-  @Prop()
+  @Prop({
+    type: {
+      link: { type: String },
+      type: { type: String },
+      restriction: { type: String },
+    },
+  })
   multimedia: {
     link: string;
     type: string;

@@ -15,7 +15,14 @@ export class Anthology {
   @Prop({ required: true })
   publicationDate: Date;
 
-  @Prop({ required: true })
+  @Prop({
+    required: true,
+    type: {
+      city: { type: String, required: true },
+      printingHouse: { type: String, required: true },
+      publisher: { type: String, required: true },
+    },
+  })
   publicationPlace: {
     city: string;
     printingHouse: string;
@@ -28,7 +35,13 @@ export class Anthology {
   @Prop({ required: true })
   originalLanguage: string;
 
-  @Prop()
+  @Prop({
+    type: {
+      link: { type: String },
+      type: { type: String },
+      restriction: { type: String },
+    },
+  })
   multimedia: {
     link: string;
     type: string;
