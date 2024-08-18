@@ -1,20 +1,43 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import { Criticism, CriticismSchema } from './criticism.entity';
-import { Author, AuthorSchema } from './author.entity';
-import { Work, WorkSchema } from './work.entity';
+import mongoose, { Document } from 'mongoose';
+import { Author } from './author.entity';
+import { Work } from './work.entity';
+import { Criticism } from './criticism.entity';
+import { User } from 'src/users/entities/user.entity';
+import { CardStatus } from '../interfaces/card-status.interface';
+import { EditHistory } from './editHistory.entity';
+import { ReviewHistory } from './reviewHistory.entity';
 
-// Definition of the Card schema
+// Definition of the Card Schema
+
 @Schema()
 export class Card extends Document {
-  @Prop({ type: AuthorSchema, required: true })
+  @Prop({ type: Author })
   author: Author;
 
-  @Prop({ type: [WorkSchema], required: true })
+  @Prop({ type: [Work] })
   works: Work[];
 
-  @Prop({ type: [CriticismSchema], required: true })
+  @Prop({ type: [Criticism] })
   criticisms: Criticism[];
+
+  @Prop({ type: String, unique: true })
+  title: string;
+
+  @Prop({ type: String, enum: CardStatus, default: CardStatus.PENDING_EDIT })
+  status: CardStatus;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true })
+  assignedEditor: User;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true })
+  assignedReviewer: User;
+
+  @Prop({ type: [EditHistory], default: [] })
+  editHistory: EditHistory[];
+
+  @Prop({ type: [ReviewHistory], default: [] })
+  reviewHistory: ReviewHistory[];
 }
 
 export const CardSchema = SchemaFactory.createForClass(Card);

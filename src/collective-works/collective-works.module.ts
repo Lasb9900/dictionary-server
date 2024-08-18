@@ -9,6 +9,7 @@ import {
 import { Anthology, AnthologySchema } from './entities/anthology.entity';
 import { Grouping, GroupingSchema } from './entities/grouping.entity';
 import { Magazine, MagazineSchema } from './entities/magazine.entity';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   controllers: [CollectiveWorksController],
@@ -25,6 +26,7 @@ import { Magazine, MagazineSchema } from './entities/magazine.entity';
         ],
       },
     ]),
+    UsersModule,
   ],
 })
 export class CollectiveWorksModule {}

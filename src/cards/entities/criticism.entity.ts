@@ -1,7 +1,8 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop } from '@nestjs/mongoose';
+import { Reference } from './reference.entity';
 
-// Definition of the Criticism schema
-@Schema()
+// Definition of the Criticism Object
+
 export class Criticism {
   @Prop({ required: true })
   type: string;
@@ -13,16 +14,14 @@ export class Criticism {
   title: string;
 
   @Prop()
-  publicationDate: Date;
+  publicationDate: string;
 
-  @Prop({ required: true })
-  bibliographicReference: {
-    publication: string;
-    link: string;
-  };
+  @Prop({
+    required: false,
+    type: Reference,
+  })
+  bibliographicReference?: Reference;
 
   @Prop()
   description: string;
 }
-
-export const CriticismSchema = SchemaFactory.createForClass(Criticism);

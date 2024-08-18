@@ -1,22 +1,26 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop } from '@nestjs/mongoose';
+import { Multimedia } from './multimedia.entity';
+import { Publication } from 'src/common/entities/publication.entity';
 
-// Definition of the Work schema
-@Schema()
+// Definition of the Work Object
+
 export class Work {
   @Prop({
     unique: true,
-    required: true,
   })
   title: string;
 
-  @Prop({ required: true })
+  @Prop()
   genre: string;
 
   @Prop()
   publicationDate: string;
 
-  @Prop()
-  publicationPlace: string;
+  @Prop({
+    type: Publication,
+    required: false,
+  })
+  publicationPlace?: Publication;
 
   @Prop()
   description: string;
@@ -24,12 +28,11 @@ export class Work {
   @Prop()
   originalLanguage: string;
 
-  @Prop()
-  multimedia: {
-    link: string;
-    type: string;
-    restriction: string;
-  };
+  @Prop({
+    type: Multimedia,
+    required: false,
+  })
+  multimedia?: Multimedia;
 
   @Prop()
   workFile: string;
@@ -40,5 +43,3 @@ export class Work {
   @Prop()
   workAudio: string;
 }
-
-export const WorkSchema = SchemaFactory.createForClass(Work);

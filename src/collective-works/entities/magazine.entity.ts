@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Multimedia } from 'src/cards/entities/multimedia.entity';
 
 // Definition for the "Revista" schema
 @Schema()
@@ -31,17 +32,10 @@ export class Magazine {
   originalLanguage: string;
 
   @Prop({
-    type: {
-      link: { type: String },
-      type: { type: String },
-      restriction: { type: String },
-    },
+    type: Multimedia,
+    required: false,
   })
-  multimedia: {
-    link: string;
-    type: string;
-    restriction: string;
-  };
+  multimedia?: Multimedia;
 
   @Prop()
   workFile: string;

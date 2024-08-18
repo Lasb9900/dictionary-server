@@ -8,7 +8,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import { CollectiveWorksService } from './collective-works.service';
-import { CreateCollectiveWorkDto } from './dto/create-collective-work.dto';
+import { CreateCollectiveWorksDto } from './dto/create-collective-work.dto';
 import { UpdateCollectiveWorkDto } from './dto/update-collective-work.dto';
 
 @Controller('collective-works')
@@ -18,7 +18,7 @@ export class CollectiveWorksController {
   ) {}
 
   @Post()
-  create(@Body() createCollectiveWorkDto: CreateCollectiveWorkDto) {
+  create(@Body() createCollectiveWorkDto: CreateCollectiveWorksDto) {
     return this.collectiveWorksService.create(createCollectiveWorkDto);
   }
 

@@ -1,4 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { GroupPublication } from './group-publication.entity';
+import { Location } from 'src/cards/entities/location.entity';
 
 // Definition for the "Agrupación" schema
 @Schema()
@@ -6,8 +8,11 @@ export class Grouping {
   @Prop({ required: true })
   name: string;
 
-  @Prop()
-  meetingPlace: string;
+  @Prop({
+    type: Location,
+    required: false,
+  })
+  meetingPlace?: Location;
 
   @Prop()
   startDate: string;
@@ -21,18 +26,8 @@ export class Grouping {
   @Prop([String])
   members: string[];
 
-  @Prop([
-    {
-      title: { type: String, required: true },
-      year: { type: Number, required: true },
-      summary: { type: String },
-    },
-  ])
-  groupPublications: {
-    title: string;
-    year: number;
-    summary?: string;
-  }[];
+  @Prop([GroupPublication])
+  groupPublications?: GroupPublication[];
 
   @Prop()
   groupActivities: string;

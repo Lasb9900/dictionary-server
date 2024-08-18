@@ -1,12 +1,14 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop } from '@nestjs/mongoose';
+import { Multimedia } from './multimedia.entity';
+import { Location } from './location.entity';
 
-// Definition of the Author schema
-@Schema()
+// Definition of the Author Object
+
 export class Author {
-  @Prop({ required: true })
+  @Prop()
   firstName: string;
 
-  @Prop({ required: true })
+  @Prop()
   lastName: string;
 
   @Prop()
@@ -15,11 +17,17 @@ export class Author {
   @Prop()
   dateOfDeath: string;
 
-  @Prop()
-  placeOfBirth: string;
+  @Prop({
+    type: Location,
+    required: false,
+  })
+  placeOfBirth?: Location;
 
-  @Prop()
-  placeOfDeath: string;
+  @Prop({
+    type: Location,
+    required: false,
+  })
+  placeOfDeath?: Location;
 
   @Prop()
   gender: string;
@@ -51,15 +59,12 @@ export class Author {
   @Prop()
   image: string;
 
-  @Prop()
-  multimedia: {
-    link: string;
-    type: string;
-    restriction: string;
-  };
+  @Prop({
+    type: Multimedia,
+    required: false,
+  })
+  multimedia?: Multimedia;
 
   @Prop()
   audio: string;
 }
-
-export const AuthorSchema = SchemaFactory.createForClass(Author);

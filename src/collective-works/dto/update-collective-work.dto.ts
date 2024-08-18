@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateCollectiveWorkDto } from './create-collective-work.dto';
+import { CreateCollectiveWorksDto } from './create-collective-work.dto';
 
 export class UpdateCollectiveWorkDto extends PartialType(
-  CreateCollectiveWorkDto,
+  CreateCollectiveWorksDto,
 ) {}

@@ -1,4 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Publication } from '../../common/entities/publication.entity';
+import { Multimedia } from 'src/cards/entities/multimedia.entity';
 
 // Definition for the "Antología" schema
 @Schema()
@@ -16,18 +18,10 @@ export class Anthology {
   publicationDate: Date;
 
   @Prop({
-    required: true,
-    type: {
-      city: { type: String, required: true },
-      printingHouse: { type: String, required: true },
-      publisher: { type: String, required: true },
-    },
+    required: false,
+    type: Publication,
   })
-  publicationPlace: {
-    city: string;
-    printingHouse: string;
-    publisher: string;
-  };
+  publicationPlace?: Publication;
 
   @Prop()
   description: string;
@@ -36,17 +30,10 @@ export class Anthology {
   originalLanguage: string;
 
   @Prop({
-    type: {
-      link: { type: String },
-      type: { type: String },
-      restriction: { type: String },
-    },
+    type: Multimedia,
+    required: false,
   })
-  multimedia: {
-    link: string;
-    type: string;
-    restriction: string;
-  };
+  multimedia?: Multimedia;
 
   @Prop()
   workFile: string;
