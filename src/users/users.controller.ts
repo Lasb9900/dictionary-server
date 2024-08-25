@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Get, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  Put,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -42,8 +51,7 @@ export class UsersController {
     };
   }
 
-  @Post('assign-roles')
-  @Auth(UserRoles.ADMINISTRATOR)
+  @Put('assign-roles')
   async assignRoles(@Body() assignRolesDto: AssignRolesDto) {
     return this.usersService.assignRoles(assignRolesDto);
   }
@@ -52,5 +60,15 @@ export class UsersController {
   @Auth(UserRoles.ADMINISTRATOR)
   async findUsersByRole(@Query('role') role: UserRoles) {
     return this.usersService.findUsersByRole(role);
+  }
+
+  @Post('')
+  async findUsers(@Body() excludedUserId: { excludedUser: string }) {
+    return this.usersService.findUsers(excludedUserId);
+  }
+
+  @Delete(':id')
+  async deleteUser(@Param('id') id: string) {
+    return this.usersService.deleteUser(id);
   }
 }

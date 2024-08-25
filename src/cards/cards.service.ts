@@ -45,22 +45,7 @@ export class CardsService {
       card[0].assignedEditor = editor;
       card[0].assignedReviewer = reviewer;
 
-      editor.assignedCardsAsEditor.push(card[0]);
-      reviewer.assignedCardsAsReviewer.push(card[0]);
-
-      await Promise.all([
-        card[0].save({ session }),
-        this.UsersModel.updateOne(
-          { _id: editor._id },
-          { $push: { assignedCardsAsEditor: card[0]._id } },
-          { session },
-        ),
-        this.UsersModel.updateOne(
-          { _id: reviewer._id },
-          { $push: { assignedCardsAsReviewer: card[0]._id } },
-          { session },
-        ),
-      ]);
+      await Promise.all([card[0].save({ session })]);
 
       await session.commitTransaction();
       session.endSession();
@@ -166,42 +151,6 @@ export class CardsService {
           .exec(),
       ];
 
-      // Eliminar la tarjeta del editor y revisor anterior si son diferentes de los nuevos
-      if (assignedEditor && card.assignedEditor.toString() !== assignedEditor) {
-        updates.push(
-          this.UsersModel.updateOne(
-            { _id: card.assignedEditor },
-            { $pull: { assignedCardsAsEditor: id } },
-            { session },
-          ).exec(),
-
-          this.UsersModel.updateOne(
-            { _id: assignedEditor },
-            { $addToSet: { assignedCardsAsEditor: id } },
-            { session },
-          ).exec(),
-        );
-      }
-
-      if (
-        assignedReviewer &&
-        card.assignedReviewer.toString() !== assignedReviewer
-      ) {
-        updates.push(
-          this.UsersModel.updateOne(
-            { _id: card.assignedReviewer },
-            { $pull: { assignedCardsAsReviewer: id } },
-            { session },
-          ).exec(),
-
-          this.UsersModel.updateOne(
-            { _id: assignedReviewer },
-            { $addToSet: { assignedCardsAsReviewer: id } },
-            { session },
-          ).exec(),
-        );
-      }
-
       const [updatedCard] = await Promise.all(updates);
 
       await session.commitTransaction();
@@ -220,33 +169,9 @@ export class CardsService {
     session.startTransaction();
 
     try {
-      const card = await this.findOne(id, session);
-
-      const { assignedEditor, assignedReviewer } = card;
-
       const updates: Promise<any>[] = [
         this.CardsModel.deleteOne({ _id: id }, { session }).exec(),
       ];
-
-      if (assignedEditor) {
-        updates.push(
-          this.UsersModel.updateOne(
-            { _id: assignedEditor },
-            { $pull: { assignedCardsAsEditor: id } },
-            { session },
-          ).exec(),
-        );
-      }
-
-      if (assignedReviewer) {
-        updates.push(
-          this.UsersModel.updateOne(
-            { _id: assignedReviewer },
-            { $pull: { assignedCardsAsReviewer: id } },
-            { session },
-          ).exec(),
-        );
-      }
 
       await Promise.all(updates);
 

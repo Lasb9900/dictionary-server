@@ -6,7 +6,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './entities/user.entity';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
@@ -21,6 +21,23 @@ export class UsersService {
     private readonly UsersModel: Model<User>,
     private readonly jwtService: JwtService,
   ) {}
+
+  async findUsers(excludeUserId: { excludedUser: string }) {
+    try {
+      const objectId = new Types.ObjectId(excludeUserId.excludedUser);
+      const users = await this.UsersModel.find({
+        _id: { $ne: objectId },
+      }).exec();
+      return users.map((user) => {
+        const userObj = user.toObject();
+        delete userObj.password;
+        return userObj;
+      });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Error al obtener los usuarios.');
+    }
+  }
 
   async create(createUserDto: CreateUserDto) {
     try {
@@ -44,7 +61,7 @@ export class UsersService {
   }
 
   async login(loginUserDto: LoginUserDto) {
-    const { password, email } = loginUserDto;
+    const { password = '', email } = loginUserDto;
 
     const user = await this.UsersModel.findOne({
       email,
@@ -64,10 +81,13 @@ export class UsersService {
   }
 
   async assignRoles(assignRolesDto: AssignRolesDto) {
-    const { userId, roles } = assignRolesDto;
+    const { userId } = assignRolesDto;
+    let { roles } = assignRolesDto;
+
+    roles = [UserRoles.RESEARCHER, ...roles];
 
     if (roles.includes(UserRoles.ADMINISTRATOR)) {
-      throw new BadRequestException('Cannot assign administrator role');
+      roles = [UserRoles.ADMINISTRATOR];
     }
 
     const user = await this.UsersModel.findByIdAndUpdate(
@@ -108,6 +128,14 @@ export class UsersService {
       ...userObj,
       token: this.getJwtToken({ id: user._id.toString() }),
     };
+  }
+
+  async deleteUser(userId: string) {
+    const user = await this.UsersModel.findByIdAndDelete(userId).exec();
+    if (!user) {
+      throw new BadRequestException('Usuario no encontrado.');
+    }
+    return { message: 'Usuario eliminado correctamente.' };
   }
 
   private getJwtToken(payload: JwtPayload) {
