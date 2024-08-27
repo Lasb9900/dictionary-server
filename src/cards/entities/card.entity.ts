@@ -1,43 +1,42 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
-import { Author } from './author.entity';
-import { Work } from './work.entity';
-import { Criticism } from './criticism.entity';
+import { AuthorCard } from './author.entity';
+import { AnthologyCard } from './anthology.entity';
+import { GroupingCard } from './grouping.entity';
+import { MagazineCard } from './magazine.entity';
 import { User } from 'src/users/entities/user.entity';
 import { CardStatus } from '../interfaces/card-status.interface';
-import { EditHistory } from './editHistory.entity';
-import { ReviewHistory } from './reviewHistory.entity';
 
-// Definition of the Card Schema
-
-@Schema()
+@Schema({ discriminatorKey: 'type' })
 export class Card extends Document {
-  @Prop({ type: Author })
-  author: Author;
+  @Prop({
+    type: String,
+    enum: [
+      AuthorCard.name,
+      AnthologyCard.name,
+      GroupingCard.name,
+      MagazineCard.name,
+    ],
+  })
+  type: string;
 
-  @Prop({ type: [Work] })
-  works: Work[];
-
-  @Prop({ type: [Criticism] })
-  criticisms: Criticism[];
-
-  @Prop({ type: String, unique: true })
+  @Prop()
   title: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  createdBy: User;
+
+  @Prop({ default: Date.now })
+  createdAt: Date;
 
   @Prop({ type: String, enum: CardStatus, default: CardStatus.PENDING_EDIT })
   status: CardStatus;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true })
-  assignedEditor: User;
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User', index: true })
+  assignedEditors: User[];
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true })
-  assignedReviewer: User;
-
-  @Prop({ type: [EditHistory], default: [] })
-  editHistory: EditHistory[];
-
-  @Prop({ type: [ReviewHistory], default: [] })
-  reviewHistory: ReviewHistory[];
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User', index: true })
+  assignedReviewers: User[];
 }
 
 export const CardSchema = SchemaFactory.createForClass(Card);

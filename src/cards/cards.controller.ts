@@ -1,67 +1,56 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { CardsService } from './cards.service';
 import { CreateCardDto } from './dto/create-card.dto';
-import { UpdateCardDto } from './dto/update-card.dto';
-import { ParseMongoIdPipe } from 'src/common/pipes/parse-mongo-id.pipe';
-import { Auth } from 'src/users/decorators/auth.decorators';
-import { UserRoles } from 'src/users/interfaces/user-roles.interface';
-import { GetUser } from 'src/users/decorators/get-user.decorator';
-import { User } from 'src/users/entities/user.entity';
+import { Card } from './entities/card.entity';
 
 @Controller('cards')
 export class CardsController {
   constructor(private readonly cardsService: CardsService) {}
 
   @Post()
-  @Auth(UserRoles.ADMINISTRATOR)
-  create(@Body() createCardDto: CreateCardDto) {
-    return this.cardsService.create(createCardDto);
+  async createCard(@Body() createCardDto: CreateCardDto): Promise<Card> {
+    return this.cardsService.createCard(createCardDto);
   }
 
   @Get()
-  @Auth(UserRoles.ADMINISTRATOR, UserRoles.EDITOR, UserRoles.REVIEWER)
-  findAll(@GetUser() user: User) {
-    return this.cardsService.findAll(user);
+  async findAllCards(): Promise<Card[]> {
+    return this.cardsService.findAllCards();
   }
 
-  @Patch(':id')
-  @Auth(UserRoles.ADMINISTRATOR, UserRoles.EDITOR)
-  update(
-    @Param('id', ParseMongoIdPipe) id: string,
-    @Body() updateCardDto: UpdateCardDto,
-  ) {
-    return this.cardsService.update(id, updateCardDto);
+  @Get('status/pending-edit')
+  async findAllPendingEditCards(): Promise<Card[]> {
+    return this.cardsService.findAllPendingEditCards();
   }
 
-  @Delete(':id')
-  @Auth(UserRoles.ADMINISTRATOR)
-  remove(@Param('id', ParseMongoIdPipe) id: string) {
-    return this.cardsService.remove(id);
+  @Get('status/pending-review')
+  async findAllPendingReviewCards(): Promise<Card[]> {
+    return this.cardsService.findAllPendingReviewCards();
   }
 
-  @Post('complete/:id')
-  @Auth(UserRoles.ADMINISTRATOR, UserRoles.EDITOR)
-  completeCard(@Param('id', ParseMongoIdPipe) id: string) {
-    return this.cardsService.completeCard(id);
+  @Get('status/validated')
+  async findAllValidatedCards(): Promise<Card[]> {
+    return this.cardsService.findAllValidatedCards();
   }
 
-  @Post('approve/:id')
-  @Auth(UserRoles.ADMINISTRATOR, UserRoles.REVIEWER)
-  approveCard(@Param('id', ParseMongoIdPipe) id: string) {
-    return this.cardsService.approveCard(id);
+  @Get('user/:userId')
+  async findAllByUser(@Param('userId') userId: string): Promise<Card[]> {
+    return this.cardsService.findAllByUser(userId);
   }
 
-  @Post('reject/:id')
-  @Auth(UserRoles.ADMINISTRATOR, UserRoles.REVIEWER)
-  rejectCard(@Param('id', ParseMongoIdPipe) id: string) {
-    return this.cardsService.rejectCard(id);
+  @Get('user/:userId/editor')
+  async findAllByEditor(@Param('userId') userId: string): Promise<Card[]> {
+    return this.cardsService.findAllByEditor(userId);
+  }
+
+  @Get('user/:userId/reviewer')
+  async findAllByReviewer(@Param('userId') userId: string): Promise<Card[]> {
+    return this.cardsService.findAllByReviewer(userId);
+  }
+
+  @Get('user/:userId/validated')
+  async findAllValidatedCardsByUser(
+    @Param('userId') userId: string,
+  ): Promise<Card[]> {
+    return this.cardsService.findAllValidatedCardsByUser(userId);
   }
 }

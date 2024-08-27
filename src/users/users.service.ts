@@ -106,18 +106,44 @@ export class UsersService {
     return userObj;
   }
 
-  async findUsersByRole(role: UserRoles) {
-    if (!Object.values(UserRoles).includes(role)) {
-      throw new BadRequestException('Invalid role');
+  async findUsersByRole(): Promise<{
+    editors: { id: string; fullName: string; imageUrl: string }[];
+    reviewers: { id: string; fullName: string; imageUrl: string }[];
+  }> {
+    try {
+      // Encontrar todos los usuarios con el rol de EDITOR
+      const editors = await this.UsersModel.find({ roles: UserRoles.EDITOR })
+        .select('_id fullName imageUrl')
+        .exec();
+
+      // Encontrar todos los usuarios con el rol de REVIEWER
+      const reviewers = await this.UsersModel.find({
+        roles: UserRoles.REVIEWER,
+      })
+        .select('_id fullName imageUrl')
+        .exec();
+
+      // Formatear los resultados para devolver solo id, fullName y imageUrl
+      const formattedEditors = editors.map((user) => ({
+        id: user._id.toString(),
+        fullName: user.fullName,
+        imageUrl: user.imageUrl,
+      }));
+
+      const formattedReviewers = reviewers.map((user) => ({
+        id: user._id.toString(),
+        fullName: user.fullName,
+        imageUrl: user.imageUrl,
+      }));
+
+      return {
+        editors: formattedEditors,
+        reviewers: formattedReviewers,
+      };
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Error al obtener los usuarios por roles.');
     }
-
-    const users = await this.UsersModel.find({ roles: role }).exec();
-
-    return users.map((user) => {
-      const userObj = user.toObject();
-      delete userObj.password;
-      return userObj;
-    });
   }
 
   async checkAuthStatus(user: User) {

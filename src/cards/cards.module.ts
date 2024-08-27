@@ -3,19 +3,30 @@ import { CardsService } from './cards.service';
 import { CardsController } from './cards.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Card, CardSchema } from './entities/card.entity';
-import { UsersModule } from 'src/users/users.module';
-import { User } from 'src/users/entities/user.entity';
-import { UserSchema } from '../users/entities/user.entity';
+import { AuthorCard, AuthorCardSchema } from './entities/author.entity';
+import {
+  AnthologyCard,
+  AnthologyCardSchema,
+} from './entities/anthology.entity';
+import { MagazineCard, MagazineCardSchema } from './entities/magazine.entity';
+import { GroupingCard, GroupingCardSchema } from './entities/grouping.entity';
 
 @Module({
   controllers: [CardsController],
   providers: [CardsService],
   imports: [
     MongooseModule.forFeature([
-      { name: Card.name, schema: CardSchema },
-      { name: User.name, schema: UserSchema },
+      {
+        name: Card.name,
+        schema: CardSchema,
+        discriminators: [
+          { name: AuthorCard.name, schema: AuthorCardSchema },
+          { name: AnthologyCard.name, schema: AnthologyCardSchema },
+          { name: MagazineCard.name, schema: MagazineCardSchema },
+          { name: GroupingCard.name, schema: GroupingCardSchema },
+        ],
+      },
     ]),
-    UsersModule,
   ],
 })
 export class CardsModule {}

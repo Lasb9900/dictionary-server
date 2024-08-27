@@ -1,22 +1,23 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { User } from 'src/users/entities/user.entity';
-import { CardStatus } from '../interfaces/card-status.interface';
 
 @Schema()
-export class AuthorCard {
+export class MagazineCard {
   type: string;
   title: string;
   createdBy: User;
   createdAt: Date;
-  status: CardStatus;
   assignedEditors: User[];
   assignedReviewers: User[];
 
-  @Prop({})
-  authorName: string;
+  @Prop()
+  magazineTitle: string;
 
   @Prop([String])
-  works: string[];
+  issues: string[];
+
+  @Prop()
+  publicationFrequency: string;
 }
 
-export const AuthorCardSchema = SchemaFactory.createForClass(AuthorCard);
+export const MagazineCardSchema = SchemaFactory.createForClass(MagazineCard);

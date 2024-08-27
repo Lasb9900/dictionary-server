@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CardsModule } from './cards/cards.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CollectiveWorksModule } from './collective-works/collective-works.module';
 import { CommonModule } from './common/common.module';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
@@ -16,7 +15,6 @@ import { JoiValidationSchema } from './config/joi.validation';
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI),
     CardsModule,
-    CollectiveWorksModule,
     CommonModule,
     UsersModule,
   ],

@@ -3,7 +3,6 @@ import {
   Post,
   Body,
   Get,
-  Query,
   Put,
   Delete,
   Param,
@@ -57,9 +56,8 @@ export class UsersController {
   }
 
   @Get('by-role')
-  @Auth(UserRoles.ADMINISTRATOR)
-  async findUsersByRole(@Query('role') role: UserRoles) {
-    return this.usersService.findUsersByRole(role);
+  async findUsersByRole() {
+    return this.usersService.findUsersByRole();
   }
 
   @Post('')
