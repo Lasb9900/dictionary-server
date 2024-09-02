@@ -6,6 +6,7 @@ import {
   Put,
   Delete,
   Param,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -68,5 +69,17 @@ export class UsersController {
   @Delete(':id')
   async deleteUser(@Param('id') id: string) {
     return this.usersService.deleteUser(id);
+  }
+
+  @Get('find-by-role')
+  async findUsersByRoleExcludingIds(
+    @Query('type') type: 'editor' | 'reviewer',
+    @Query('excludeIds') excludeIds: string,
+  ) {
+    const excludeIdsArray = excludeIds
+      ? excludeIds.split(',').map((id) => id.trim())
+      : [];
+
+    return this.usersService.findUsersByRoleExcludingIds(type, excludeIdsArray);
   }
 }

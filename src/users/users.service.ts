@@ -164,6 +164,40 @@ export class UsersService {
     return { message: 'Usuario eliminado correctamente.' };
   }
 
+  async findUsersByRoleExcludingIds(
+    type: 'editor' | 'reviewer',
+    excludeIds: string[] = [],
+  ): Promise<{ id: string; fullName: string; imageUrl: string }[]> {
+    try {
+      let role: UserRoles;
+      if (type === 'editor') {
+        role = UserRoles.EDITOR;
+      } else if (type === 'reviewer') {
+        role = UserRoles.REVIEWER;
+      } else {
+        throw new BadRequestException('Invalid user type');
+      }
+
+      const excludeObjectIds = excludeIds.map((id) => new Types.ObjectId(id));
+
+      const users = await this.UsersModel.find({
+        roles: role,
+        _id: { $nin: excludeObjectIds },
+      })
+        .select('_id fullName imageUrl')
+        .exec();
+
+      return users.map((user) => ({
+        id: user._id.toString(),
+        fullName: user.fullName,
+        imageUrl: user.imageUrl,
+      }));
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Error al obtener los usuarios.');
+    }
+  }
+
   private getJwtToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;

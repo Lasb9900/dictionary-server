@@ -27,24 +27,29 @@ export class CardsService {
     const { type, ...data } = createCardDto;
     let createdCard;
 
-    switch (type) {
-      case 'author':
-        createdCard = new this.authorCardModel(data);
-        break;
-      case 'anthology':
-        createdCard = new this.anthologyCardModel(data);
-        break;
-      case 'magazine':
-        createdCard = new this.magazineCardModel(data);
-        break;
-      case 'grouping':
-        createdCard = new this.groupingCardModel(data);
-        break;
-      default:
-        throw new Error('Invalid card type');
-    }
+    try {
+      switch (type) {
+        case 'author':
+          createdCard = new this.authorCardModel(data);
+          break;
+        case 'anthology':
+          createdCard = new this.anthologyCardModel(data);
+          break;
+        case 'magazine':
+          createdCard = new this.magazineCardModel(data);
+          break;
+        case 'grouping':
+          createdCard = new this.groupingCardModel(data);
+          break;
+        default:
+          throw new Error('Invalid card type');
+      }
 
-    return await createdCard.save();
+      return await createdCard.save();
+    } catch (error) {
+      console.error('Error creating card:', error);
+      throw new Error('Failed to create card. Please try again later.');
+    }
   }
 
   async findAllCards(): Promise<Card[]> {
