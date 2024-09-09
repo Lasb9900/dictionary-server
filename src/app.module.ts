@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { CardsModule } from './cards/cards.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CommonModule } from './common/common.module';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { EnvConfiguration } from './config/env.config';
 import { JoiValidationSchema } from './config/joi.validation';
+import { Neo4jModule } from './neo4j/neo4j.module';
 
 @Module({
   imports: [
@@ -15,8 +15,8 @@ import { JoiValidationSchema } from './config/joi.validation';
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI),
     CardsModule,
-    CommonModule,
     UsersModule,
+    Neo4jModule.forRootAsync(),
   ],
 })
 export class AppModule {}
