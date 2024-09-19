@@ -26,6 +26,34 @@ export class CardsController {
     return this.cardsService.findAllCards();
   }
 
+  @Get('author/:id')
+  async getAuthorCardById(@Param('id') id: string) {
+    const fields =
+      'fullName gender pseudonym dateOfBirth dateOfDeath placeOfBirth placeOfDeath relatives relevantActivities mainTheme mainGenre context multimedia works criticism';
+    return this.cardsService.getCardById(id, 'author', fields);
+  }
+
+  @Get('magazine/:id')
+  async getMagazineCardById(@Param('id') id: string) {
+    const fields =
+      'magazineTitle originalLanguage firstIssueDate lastIssueDate issuesPublished publicationPlace creators sections description multimedia criticism';
+    return this.cardsService.getCardById(id, 'magazine', fields);
+  }
+
+  @Get('anthology/:id')
+  async getAnthologyCardById(@Param('id') id: string) {
+    const fields =
+      'anthologyTitle genre author originalLanguage publicationDate publicationPlace description multimedia criticism';
+    return this.cardsService.getCardById(id, 'anthology', fields);
+  }
+
+  @Get('grouping/:id')
+  async getGroupingCardById(@Param('id') id: string) {
+    const fields =
+      'name meetingPlace startDate endDate generalCharacteristics members groupPublications groupActivities multimedia criticism';
+    return this.cardsService.getCardById(id, 'grouping', fields);
+  }
+
   @Put(':id')
   async updateCard(
     @Param('id') id: string,
@@ -34,36 +62,68 @@ export class CardsController {
     return this.cardsService.updateCard(id, updateCardDto);
   }
 
-  @Put('author/:id')
+  @Put('save/author/:id')
+  async saveAuthorCard(
+    @Param('id') id: string,
+    @Body() updateCardDto: UpdateAuthorCardDto,
+  ): Promise<Card> {
+    return this.cardsService.saveAuthorCardContent(id, updateCardDto);
+  }
+
+  @Put('save/magazine/:id')
+  async saveMagazineCard(
+    @Param('id') id: string,
+    @Body() updateCardDto: UpdateMagazineCardDto,
+  ): Promise<Card> {
+    return this.cardsService.saveMagazineCardContent(id, updateCardDto);
+  }
+
+  @Put('save/anthology/:id')
+  async saveAnthologyCard(
+    @Param('id') id: string,
+    @Body() updateCardDto: UpdateAnthologyCardDto,
+  ): Promise<Card> {
+    return this.cardsService.saveAnthologyCardContent(id, updateCardDto);
+  }
+
+  @Put('save/grouping/:id')
+  async saveGroupingCard(
+    @Param('id') id: string,
+    @Body() updateCardDto: UpdateGroupingCardDto,
+  ): Promise<Card> {
+    return this.cardsService.saveGroupingCardContent(id, updateCardDto);
+  }
+
+  @Put('update/author/:id')
   async updateAuthorCard(
     @Param('id') id: string,
     @Body() updateCardDto: UpdateAuthorCardDto,
   ): Promise<Card> {
-    return this.cardsService.updateAuthorCardContent(id, updateCardDto);
+    return this.cardsService.saveAuthorCardContent(id, updateCardDto);
   }
 
-  @Put('magazine/:id')
+  @Put('update/magazine/:id')
   async updateMagazineCard(
     @Param('id') id: string,
     @Body() updateCardDto: UpdateMagazineCardDto,
   ): Promise<Card> {
-    return this.cardsService.updateMagazineCardContent(id, updateCardDto);
+    return this.cardsService.saveMagazineCardContent(id, updateCardDto);
   }
 
-  @Put('anthology/:id')
+  @Put('update/anthology/:id')
   async updateAnthologyCard(
     @Param('id') id: string,
     @Body() updateCardDto: UpdateAnthologyCardDto,
   ): Promise<Card> {
-    return this.cardsService.updateAnthologyCardContent(id, updateCardDto);
+    return this.cardsService.saveAnthologyCardContent(id, updateCardDto);
   }
 
-  @Put('grouping/:id')
+  @Put('update/grouping/:id')
   async updateGroupingCard(
     @Param('id') id: string,
     @Body() updateCardDto: UpdateGroupingCardDto,
   ): Promise<Card> {
-    return this.cardsService.updateGroupingCardContent(id, updateCardDto);
+    return this.cardsService.saveGroupingCardContent(id, updateCardDto);
   }
 
   @Put('upload/author/:id')

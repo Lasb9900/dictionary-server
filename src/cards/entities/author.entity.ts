@@ -5,6 +5,7 @@ import { Multimedia } from '../interfaces/multimedia.interface';
 import { Gender } from '../interfaces/gender.interface';
 import { Work } from '../interfaces/work.interface';
 import { Criticism } from '../interfaces/criticism.interface';
+import { Relative } from '../interfaces/relative.interface';
 
 @Schema()
 export class AuthorCard {
@@ -17,10 +18,7 @@ export class AuthorCard {
   assignedReviewers: User[];
 
   @Prop()
-  firstName: string;
-
-  @Prop()
-  lastName: string;
+  fullName: string;
 
   @Prop()
   gender: Gender;
@@ -41,7 +39,7 @@ export class AuthorCard {
   placeOfDeath: string;
 
   @Prop()
-  relatives: string;
+  relatives: Relative[];
 
   @Prop()
   relevantActivities: string;

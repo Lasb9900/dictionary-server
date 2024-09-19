@@ -3,15 +3,12 @@ import { Multimedia } from '../interfaces/multimedia.interface';
 import { Work } from '../interfaces/work.interface';
 import { Criticism } from '../interfaces/criticism.interface';
 import { Gender } from '../interfaces/gender.interface';
+import { Relative } from '../interfaces/relative.interface';
 
 export class UpdateAuthorCardDto {
   @IsOptional()
   @IsString()
-  firstName: string;
-
-  @IsOptional()
-  @IsString()
-  lastName: string;
+  fullName: string;
 
   @IsOptional()
   @IsEnum(Gender)
@@ -38,8 +35,8 @@ export class UpdateAuthorCardDto {
   placeOfDeath?: string;
 
   @IsOptional()
-  @IsString()
-  relatives?: string;
+  @IsArray()
+  relatives?: Relative[];
 
   @IsOptional()
   @IsString()
