@@ -30,6 +30,17 @@ export class CardsService {
     private readonly queryRepository: QueryRepository,
   ) {}
 
+  async getCardById(id: string, type: string, fields: string): Promise<any> {
+    const card = await this.cardModel
+      .findOne({ _id: id, type })
+      .select(fields)
+      .exec();
+    if (!card) {
+      throw new Error(`${type} card not found`);
+    }
+    return card;
+  }
+
   async createCard(createCardDto: CreateCardDto): Promise<Card> {
     const { type, ...data } = createCardDto;
     let createdCard;
@@ -81,7 +92,7 @@ export class CardsService {
     }
   }
 
-  async updateAuthorCardContent(
+  async saveAuthorCardContent(
     id: string,
     updateCardDto: UpdateAuthorCardDto,
   ): Promise<Card> {
@@ -106,7 +117,7 @@ export class CardsService {
     }
   }
 
-  async updateMagazineCardContent(
+  async saveMagazineCardContent(
     id: string,
     updateCardDto: UpdateMagazineCardDto,
   ): Promise<Card> {
@@ -131,7 +142,7 @@ export class CardsService {
     }
   }
 
-  async updateAnthologyCardContent(
+  async saveAnthologyCardContent(
     id: string,
     updateCardDto: UpdateAnthologyCardDto,
   ): Promise<Card> {
@@ -156,7 +167,7 @@ export class CardsService {
     }
   }
 
-  async updateGroupingCardContent(
+  async saveGroupingCardContent(
     id: string,
     updateCardDto: UpdateGroupingCardDto,
   ): Promise<Card> {
@@ -178,6 +189,126 @@ export class CardsService {
     } catch (error) {
       console.error('Error updating card:', error);
       throw new Error('Failed to update card. Please try again later.');
+    }
+  }
+
+  async updateAuthorCardAndSetPendingReview(
+    id: string,
+    updateCardDto: UpdateAuthorCardDto,
+  ): Promise<Card> {
+    try {
+      const updatedCard = await this.authorCardModel.findByIdAndUpdate(
+        id,
+        { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      if (!updatedCard) {
+        throw new Error('Card not found');
+      }
+
+      return updatedCard;
+    } catch (error) {
+      console.error(
+        'Error updating card and setting status to pending review:',
+        error,
+      );
+      throw new Error(
+        'Failed to update card and set status. Please try again later.',
+      );
+    }
+  }
+
+  async updateMagazineCardAndSetPendingReview(
+    id: string,
+    updateCardDto: UpdateMagazineCardDto,
+  ): Promise<Card> {
+    try {
+      const updatedCard = await this.magazineCardModel.findByIdAndUpdate(
+        id,
+        { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      if (!updatedCard) {
+        throw new Error('Card not found');
+      }
+
+      return updatedCard;
+    } catch (error) {
+      console.error(
+        'Error updating card and setting status to pending review:',
+        error,
+      );
+      throw new Error(
+        'Failed to update card and set status. Please try again later.',
+      );
+    }
+  }
+
+  async updateAnthologyCardAndSetPendingReview(
+    id: string,
+    updateCardDto: UpdateAnthologyCardDto,
+  ): Promise<Card> {
+    try {
+      const updatedCard = await this.anthologyCardModel.findByIdAndUpdate(
+        id,
+        { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      if (!updatedCard) {
+        throw new Error('Card not found');
+      }
+
+      return updatedCard;
+    } catch (error) {
+      console.error(
+        'Error updating card and setting status to pending review:',
+        error,
+      );
+      throw new Error(
+        'Failed to update card and set status. Please try again later.',
+      );
+    }
+  }
+
+  async updateGroupingCardAndSetPendingReview(
+    id: string,
+    updateCardDto: UpdateGroupingCardDto,
+  ): Promise<Card> {
+    try {
+      const updatedCard = await this.groupingCardModel.findByIdAndUpdate(
+        id,
+        { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      if (!updatedCard) {
+        throw new Error('Card not found');
+      }
+
+      return updatedCard;
+    } catch (error) {
+      console.error(
+        'Error updating card and setting status to pending review:',
+        error,
+      );
+      throw new Error(
+        'Failed to update card and set status. Please try again later.',
+      );
     }
   }
 
