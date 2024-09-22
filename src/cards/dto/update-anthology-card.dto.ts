@@ -38,4 +38,8 @@ export class UpdateAnthologyCardDto {
   @IsOptional()
   @IsArray()
   criticism: Criticism[];
+
+  @IsOptional()
+  @IsString()
+  text: string;
 }

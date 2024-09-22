@@ -49,7 +49,8 @@ export class QueryRepository implements OnApplicationShutdown {
                   card.relevantActivities = $relevantActivities, 
                   card.mainTheme = $mainTheme, 
                   card.mainGenre = $mainGenre, 
-                  card.context = $context
+                  card.context = $context,
+                  card.text = $text
     ON MATCH SET card.fullName = $fullName,
                   card.pseudonym = $pseudonym, 
                   card.dateOfBirth = $dateOfBirth, 
@@ -60,7 +61,8 @@ export class QueryRepository implements OnApplicationShutdown {
                   card.relevantActivities = $relevantActivities, 
                   card.mainTheme = $mainTheme, 
                   card.mainGenre = $mainGenre, 
-                  card.context = $context
+                  card.context = $context,
+                  card.text = $text
 
     // Crear nodos de relatives relacionados con el autor
     WITH card, $relatives AS relativesData
@@ -89,11 +91,13 @@ export class QueryRepository implements OnApplicationShutdown {
     ON CREATE SET work.originalLanguage = workData.originalLanguage, 
                   work.genre = workData.genre, 
                   work.publicationDate = workData.publicationDate, 
-                  work.description = workData.description
+                  work.description = workData.description,
+                  work.text = workData.text
     ON MATCH SET work.originalLanguage = workData.originalLanguage, 
                   work.genre = workData.genre, 
                   work.publicationDate = workData.publicationDate, 
-                  work.description = workData.description
+                  work.description = workData.description,
+                  work.text = workData.text
     MERGE (card)-[:CREATED]->(work)
 
     // Crear o actualizar el lugar de publicación de la obra
@@ -126,13 +130,15 @@ export class QueryRepository implements OnApplicationShutdown {
                   criticism.publicationDate = crit.publicationDate, 
                   criticism.link = crit.link, 
                   criticism.bibliographicReference = crit.bibliographicReference, 
-                  criticism.description = crit.description
+                  criticism.description = crit.description,
+                  criticism.text = crit.text
     ON MATCH SET criticism.type = crit.type, 
                   criticism.author = crit.author, 
                   criticism.publicationDate = crit.publicationDate, 
                   criticism.link = crit.link, 
                   criticism.bibliographicReference = crit.bibliographicReference, 
-                  criticism.description = crit.description
+                  criticism.description = crit.description,
+                  criticism.text = crit.text
     MERGE (criticism)-[:CRITICIZES_ABOUT]->(card)
 
     // Crear multimedia de las críticas
@@ -161,19 +167,38 @@ export class QueryRepository implements OnApplicationShutdown {
         // Crear o actualizar el nodo de la revista
         MERGE (magazine:Magazine {fichaId: $id})
         ON CREATE SET magazine.magazineTitle = $magazineTitle, 
-                      magazine.originalLanguage = $originalLanguage, 
-                      magazine.firstIssueDate = $firstIssueDate, 
-                      magazine.lastIssueDate = $lastIssueDate, 
-                      magazine.issuesPublished = $issuesPublished, 
+                      magazine.originalLanguage = $originalLanguage,  
                       magazine.sections = $sections, 
-                      magazine.description = $description
+                      magazine.description = $description,
+                      magazine.text = $text
         ON MATCH SET magazine.magazineTitle = $magazineTitle, 
-                      magazine.originalLanguage = $originalLanguage, 
-                      magazine.firstIssueDate = $firstIssueDate, 
-                      magazine.lastIssueDate = $lastIssueDate, 
-                      magazine.issuesPublished = $issuesPublished, 
+                      magazine.originalLanguage = $originalLanguage,  
                       magazine.sections = $sections, 
-                      magazine.description = $description
+                      magazine.description = $description,
+                      magazine.text = $text
+
+        // Crear o actualizar números de la revista
+        WITH magazine, $numbers AS numbersData
+        UNWIND numbersData AS numberData
+        MERGE (number:MagazineIssue {number: numberData.number, fichaId: $id})
+        ON CREATE SET number.issueDate = numberData.issueDate, 
+                      number.language = numberData.language, 
+                      number.translator = numberData.translator
+        ON MATCH SET number.issueDate = numberData.issueDate,
+                      number.language = numberData.language, 
+                      number.translator = numberData.translator
+        MERGE (magazine)-[:HAS_NUMBER]->(number)
+
+        // Crear o actualizar lugar de publicación de la revista
+        WITH magazine, number, numberData.publicationPlace AS pubPlace
+        MERGE (place:Publication {fichaId: $id, city: pubPlace.city, printingHouse: pubPlace.printingHouse, publisher: pubPlace.publisher})
+        ON CREATE SET place.city = pubPlace.city, 
+                      place.printingHouse = pubPlace.printingHouse, 
+                      place.publisher = pubPlace.publisher
+        ON MATCH SET place.city = pubPlace.city,
+                      place.printingHouse = pubPlace.printingHouse, 
+                      place.publisher = pubPlace.publisher
+        MERGE (number)-[:PUBLISHED_IN]->(place)
 
         // Crear o actualizar multimedia de la revista
         WITH magazine, $multimedia AS multimediaData
@@ -199,12 +224,14 @@ export class QueryRepository implements OnApplicationShutdown {
                       criticism.publicationDate = crit.publicationDate, 
                       criticism.link = crit.link, 
                       criticism.bibliographicReference = crit.bibliographicReference, 
-                      criticism.description = crit.description
+                      criticism.description = crit.description,
+                      criticism.text = crit.text
         ON MATCH SET criticism.type = crit.type, criticism.author = crit.author, 
                       criticism.publicationDate = crit.publicationDate, 
                       criticism.link = crit.link, 
                       criticism.bibliographicReference = crit.bibliographicReference, 
-                      criticism.description = crit.description
+                      criticism.description = crit.description,
+                      criticism.text = crit.text
         MERGE (criticism)-[:CRITICIZES_ABOUT]->(magazine)
 
         // Crear o actualizar multimedia de las críticas
@@ -233,13 +260,15 @@ export class QueryRepository implements OnApplicationShutdown {
                       anthology.author = $author, 
                       anthology.originalLanguage = $originalLanguage, 
                       anthology.publicationDate = $publicationDate, 
-                      anthology.description = $description
+                      anthology.description = $description,
+                      anthology.text = $text
         ON MATCH SET anthology.title = $anthologyTitle, 
                       anthology.genre = $genre, 
                       anthology.author = $author, 
                       anthology.originalLanguage = $originalLanguage, 
                       anthology.publicationDate = $publicationDate, 
-                      anthology.description = $description
+                      anthology.description = $description,
+                      anthology.text = $text
 
         // Crear o actualizar el lugar de publicación
         WITH anthology, $publicationPlace AS pubPlace
@@ -268,12 +297,14 @@ export class QueryRepository implements OnApplicationShutdown {
                       criticism.publicationDate = crit.publicationDate, 
                       criticism.link = crit.link, 
                       criticism.bibliographicReference = crit.bibliographicReference, 
-                      criticism.description = crit.description
+                      criticism.description = crit.description,
+                      criticism.text = crit.text
         ON MATCH SET criticism.type = crit.type, criticism.author = crit.author, 
                       criticism.publicationDate = crit.publicationDate, 
                       criticism.link = crit.link, 
                       criticism.bibliographicReference = crit.bibliographicReference, 
-                      criticism.description = crit.description
+                      criticism.description = crit.description,
+                      criticism.text = crit.text
         MERGE (criticism)-[:CRITICIZES_ABOUT]->(anthology)
 
         // Crear o actualizar multimedia de las críticas
@@ -301,12 +332,14 @@ export class QueryRepository implements OnApplicationShutdown {
                       group.startDate = $startDate, 
                       group.endDate = $endDate, 
                       group.generalCharacteristics = $generalCharacteristics, 
-                      group.groupActivities = $groupActivities
+                      group.groupActivities = $groupActivities,
+                      group.text = $text
         ON MATCH SET group.name = $name, 
                       group.startDate = $startDate, 
                       group.endDate = $endDate, 
                       group.generalCharacteristics = $generalCharacteristics, 
-                      group.groupActivities = $groupActivities
+                      group.groupActivities = $groupActivities,
+                      group.text = $text
 
         // Crear o actualizar el lugar de reuniones
         WITH group, $meetingPlace AS meetingPlaceData
@@ -339,12 +372,14 @@ export class QueryRepository implements OnApplicationShutdown {
                       criticism.publicationDate = crit.publicationDate, 
                       criticism.link = crit.link, 
                       criticism.bibliographicReference = crit.bibliographicReference, 
-                      criticism.description = crit.description
+                      criticism.description = crit.description,
+                      criticism.text = crit.text
         ON MATCH SET criticism.type = crit.type, criticism.author = crit.author, 
                       criticism.publicationDate = crit.publicationDate, 
                       criticism.link = crit.link, 
                       criticism.bibliographicReference = crit.bibliographicReference, 
-                      criticism.description = crit.description
+                      criticism.description = crit.description,
+                      criticism.text = crit.text
         MERGE (criticism)-[:CRITICIZES_ABOUT]->(group)
 
         // Crear o actualizar multimedia de las críticas

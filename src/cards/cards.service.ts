@@ -14,6 +14,13 @@ import { UpdateMagazineCardDto } from './dto/update-magazine-card.dto';
 import { UpdateAnthologyCardDto } from './dto/update-anthology-card.dto';
 import { UpdateGroupingCardDto } from './dto/update-grouping-card.dto';
 import { QueryRepository } from '../neo4j/query.repository';
+import { OpenaiService } from 'src/openai/openai.service';
+import { userSummaryPrompt } from 'src/openai/prompts/user-summary';
+import { workSummaryPrompt } from 'src/openai/prompts/work-summary';
+import { criticismSummary } from '../openai/prompts/criticism-summary';
+import { magazineSummaryPrompt } from 'src/openai/prompts/magazine-summary';
+import { anthologySummaryPrompt } from 'src/openai/prompts/anthology-summary';
+import { groupingSummaryPrompt } from 'src/openai/prompts/grouping-summary';
 
 @Injectable()
 export class CardsService {
@@ -28,17 +35,20 @@ export class CardsService {
     @InjectModel(GroupingCard.name)
     private readonly groupingCardModel: Model<GroupingCard>,
     private readonly queryRepository: QueryRepository,
+    private readonly openaiService: OpenaiService,
   ) {}
 
-  async getCardById(id: string, type: string, fields: string): Promise<any> {
-    const card = await this.cardModel
-      .findOne({ _id: id, type })
-      .select(fields)
-      .exec();
-    if (!card) {
-      throw new Error(`${type} card not found`);
+  async getCardById(id: string, fields: string): Promise<any> {
+    try {
+      const card = await this.cardModel
+        .findOne({ _id: id })
+        .select(fields)
+        .exec();
+      return card;
+    } catch (error) {
+      console.error('Error getting card:', error);
+      throw new Error('Failed to get card. Please try again later.');
     }
-    return card;
   }
 
   async createCard(createCardDto: CreateCardDto): Promise<Card> {
@@ -122,6 +132,7 @@ export class CardsService {
     updateCardDto: UpdateMagazineCardDto,
   ): Promise<Card> {
     try {
+      console.log('updateCardDto', updateCardDto);
       const updatedCard = await this.magazineCardModel.findByIdAndUpdate(
         id,
         updateCardDto,
@@ -197,6 +208,77 @@ export class CardsService {
     updateCardDto: UpdateAuthorCardDto,
   ): Promise<Card> {
     try {
+      //Generate Author Text
+      const authorText = await this.openaiService.generateText(
+        userSummaryPrompt,
+        JSON.stringify({
+          fullName: updateCardDto.fullName,
+          gender: updateCardDto.gender,
+          pseudonym: updateCardDto.pseudonym,
+          dateOfBirth: updateCardDto.dateOfBirth,
+          dateOfDeath: updateCardDto.dateOfDeath,
+          placeOfBirth: updateCardDto.placeOfBirth,
+          placeOfDeath: updateCardDto.placeOfDeath,
+          relatives: updateCardDto.relatives,
+          relevantActivities: updateCardDto.relevantActivities,
+          mainTheme: updateCardDto.mainTheme,
+          mainGenre: updateCardDto.mainGenre,
+          context: updateCardDto.context,
+        }),
+      );
+
+      // Generate Works Text
+      const worksSummaries = await Promise.all(
+        updateCardDto.works.map(async (work) => {
+          const worksText = await this.openaiService.generateText(
+            workSummaryPrompt,
+            JSON.stringify({
+              title: work.title,
+              originalLanguage: work.originalLanguage,
+              genre: work.genre,
+              publicationDate: work.publicationDate,
+              publicationPlace: {
+                city: work.publicationPlace?.city,
+                printingHouse: work.publicationPlace?.printingHouse,
+                publisher: work.publicationPlace?.publisher,
+              },
+              description: work.description,
+            }),
+          );
+          return worksText;
+        }),
+      );
+
+      // Generate Criticism Text
+      const criticismsSummaries = await Promise.all(
+        updateCardDto.criticism.map(async (criticism) => {
+          const criticismText = await this.openaiService.generateText(
+            criticismSummary,
+            JSON.stringify({
+              title: criticism.title,
+              type: criticism.type,
+              author: criticism.author,
+              publicationDate: criticism.publicationDate,
+              link: criticism.link,
+              bibliographicReference: criticism.bibliographicReference,
+              description: criticism.description,
+              text: criticism.text,
+            }),
+          );
+          return criticismText;
+        }),
+      );
+
+      updateCardDto.text = authorText;
+
+      updateCardDto.works.forEach((work, index) => {
+        work.text = worksSummaries[index];
+      });
+
+      updateCardDto.criticism.forEach((criticism, index) => {
+        criticism.text = criticismsSummaries[index];
+      });
+
       const updatedCard = await this.authorCardModel.findByIdAndUpdate(
         id,
         { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
@@ -227,6 +309,56 @@ export class CardsService {
     updateCardDto: UpdateMagazineCardDto,
   ): Promise<Card> {
     try {
+      const magazineDescription = await this.openaiService.generateText(
+        magazineSummaryPrompt,
+        JSON.stringify({
+          magazineTitle: updateCardDto.magazineTitle,
+          originalLanguage: updateCardDto.originalLanguage,
+          numbers: updateCardDto.numbers.map((issue) => ({
+            number: issue.number,
+            issueDate: issue.issueDate,
+            publicationPlace: {
+              city: issue.publicationPlace?.city,
+              printingHouse: issue.publicationPlace?.printingHouse,
+              publisher: issue.publicationPlace?.publisher,
+            },
+            language: issue.language,
+            translator: issue.translator,
+          })),
+          creators: updateCardDto.creators.map((creator) => ({
+            role: creator.role,
+            name: creator.name,
+          })),
+          sections: updateCardDto.sections,
+          description: updateCardDto.description,
+        }),
+      );
+
+      const criticismsSummaries = await Promise.all(
+        updateCardDto.criticism.map(async (criticism) => {
+          const criticismText = await this.openaiService.generateText(
+            criticismSummary,
+            JSON.stringify({
+              title: criticism.title,
+              type: criticism.type,
+              author: criticism.author,
+              publicationDate: criticism.publicationDate,
+              link: criticism.link,
+              bibliographicReference: criticism.bibliographicReference,
+              description: criticism.description,
+              text: criticism.text,
+            }),
+          );
+          return criticismText;
+        }),
+      );
+
+      updateCardDto.criticism.forEach((criticism, index) => {
+        criticism.text = criticismsSummaries[index];
+      });
+
+      updateCardDto.text = magazineDescription;
+
       const updatedCard = await this.magazineCardModel.findByIdAndUpdate(
         id,
         { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
@@ -257,6 +389,48 @@ export class CardsService {
     updateCardDto: UpdateAnthologyCardDto,
   ): Promise<Card> {
     try {
+      const anthologyDescription = await this.openaiService.generateText(
+        anthologySummaryPrompt,
+        JSON.stringify({
+          anthologyTitle: updateCardDto.anthologyTitle,
+          genre: updateCardDto.genre,
+          author: updateCardDto.author,
+          originalLanguage: updateCardDto.originalLanguage,
+          publicationDate: updateCardDto.publicationDate,
+          publicationPlace: {
+            city: updateCardDto.publicationPlace?.city,
+            printingHouse: updateCardDto.publicationPlace?.printingHouse,
+            publisher: updateCardDto.publicationPlace?.publisher,
+          },
+          description: updateCardDto.description,
+        }),
+      );
+
+      const criticismsSummaries = await Promise.all(
+        updateCardDto.criticism.map(async (criticism) => {
+          const criticismText = await this.openaiService.generateText(
+            criticismSummary,
+            JSON.stringify({
+              title: criticism.title,
+              type: criticism.type,
+              author: criticism.author,
+              publicationDate: criticism.publicationDate,
+              link: criticism.link,
+              bibliographicReference: criticism.bibliographicReference,
+              description: criticism.description,
+              text: criticism.text,
+            }),
+          );
+          return criticismText;
+        }),
+      );
+
+      updateCardDto.criticism.forEach((criticism, index) => {
+        criticism.text = criticismsSummaries[index];
+      });
+
+      updateCardDto.text = anthologyDescription;
+
       const updatedCard = await this.anthologyCardModel.findByIdAndUpdate(
         id,
         { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
@@ -287,6 +461,55 @@ export class CardsService {
     updateCardDto: UpdateGroupingCardDto,
   ): Promise<Card> {
     try {
+      const groupDescription = await this.openaiService.generateText(
+        groupingSummaryPrompt,
+        JSON.stringify({
+          name: updateCardDto.name,
+          meetingPlace: {
+            city: updateCardDto.meetingPlace?.city,
+            municipality: updateCardDto.meetingPlace?.municipality,
+          },
+          startDate: updateCardDto.startDate,
+          endDate: updateCardDto.endDate,
+          generalCharacteristics: updateCardDto.generalCharacteristics,
+          members: updateCardDto.members,
+          groupPublications: updateCardDto.groupPublications.map(
+            (publication) => ({
+              title: publication.title,
+              year: publication.year,
+              authors: publication.authors,
+              summary: publication.summary,
+            }),
+          ),
+          groupActivities: updateCardDto.groupActivities,
+        }),
+      );
+
+      const criticismsSummaries = await Promise.all(
+        updateCardDto.criticism.map(async (criticism) => {
+          const criticismText = await this.openaiService.generateText(
+            criticismSummary,
+            JSON.stringify({
+              title: criticism.title,
+              type: criticism.type,
+              author: criticism.author,
+              publicationDate: criticism.publicationDate,
+              link: criticism.link,
+              bibliographicReference: criticism.bibliographicReference,
+              description: criticism.description,
+              text: criticism.text,
+            }),
+          );
+          return criticismText;
+        }),
+      );
+
+      updateCardDto.criticism.forEach((criticism, index) => {
+        criticism.text = criticismsSummaries[index];
+      });
+
+      updateCardDto.text = groupDescription;
+
       const updatedCard = await this.groupingCardModel.findByIdAndUpdate(
         id,
         { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
@@ -322,7 +545,7 @@ export class CardsService {
     try {
       const updatedCard = await this.authorCardModel.findByIdAndUpdate(
         id,
-        updateCardDto,
+        { status: CardStatus.VALIDATED },
         {
           new: true,
           runValidators: true,
@@ -352,23 +575,23 @@ export class CardsService {
     }
   }
 
-  async uploadMagazineCard(
-    id: string,
-    updateMagazineCardDto: UpdateMagazineCardDto,
-  ): Promise<MagazineCard> {
+  async uploadMagazineCard(id: string): Promise<MagazineCard> {
     const session = await this.magazineCardModel.db.startSession();
     session.startTransaction();
 
     try {
-      const updatedCard = await this.magazineCardModel.findByIdAndUpdate(
-        id,
-        updateMagazineCardDto,
-        {
-          new: true,
-          runValidators: true,
-          session,
-        },
-      );
+      const updatedCard = await this.magazineCardModel
+        .findByIdAndUpdate(
+          id,
+          { status: CardStatus.VALIDATED },
+          {
+            new: true,
+            runValidators: true,
+            session,
+          },
+        )
+        .lean()
+        .exec();
 
       if (!updatedCard) {
         throw new Error('Magazine card not found');
@@ -377,7 +600,15 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createMagazineCardNodes({
-        ...updateMagazineCardDto,
+        magazineTitle: updatedCard.magazineTitle,
+        originalLanguage: updatedCard.originalLanguage,
+        sections: updatedCard.sections,
+        description: updatedCard.description,
+        text: updatedCard.text,
+        numbers: updatedCard.numbers,
+        multimedia: updatedCard.multimedia,
+        creators: updatedCard.creators,
+        criticism: updatedCard.criticism,
         id,
       });
 
@@ -392,23 +623,23 @@ export class CardsService {
     }
   }
 
-  async uploadAnthologyCard(
-    id: string,
-    updateAnthologyCardDto: UpdateAnthologyCardDto,
-  ): Promise<AnthologyCard> {
+  async uploadAnthologyCard(id: string): Promise<AnthologyCard> {
     const session = await this.anthologyCardModel.db.startSession();
     session.startTransaction();
 
     try {
-      const updatedCard = await this.anthologyCardModel.findByIdAndUpdate(
-        id,
-        updateAnthologyCardDto,
-        {
-          new: true,
-          runValidators: true,
-          session,
-        },
-      );
+      const updatedCard = await this.anthologyCardModel
+        .findByIdAndUpdate(
+          id,
+          { status: CardStatus.VALIDATED },
+          {
+            new: true,
+            runValidators: true,
+            session,
+          },
+        )
+        .lean()
+        .exec();
 
       if (!updatedCard) {
         throw new Error('Anthology card not found');
@@ -417,7 +648,16 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createAnthologyCardNodes({
-        ...updateAnthologyCardDto,
+        anthologyTitle: updatedCard.anthologyTitle,
+        genre: updatedCard.genre,
+        author: updatedCard.author,
+        originalLanguage: updatedCard.originalLanguage,
+        publicationDate: updatedCard.publicationDate,
+        publicationPlace: updatedCard.publicationPlace,
+        description: updatedCard.description,
+        text: updatedCard.text,
+        multimedia: updatedCard.multimedia,
+        criticism: updatedCard.criticism,
         id,
       });
 
@@ -432,23 +672,23 @@ export class CardsService {
     }
   }
 
-  async uploadGroupingCard(
-    id: string,
-    updateGroupingCardDto: UpdateGroupingCardDto,
-  ): Promise<GroupingCard> {
+  async uploadGroupingCard(id: string): Promise<GroupingCard> {
     const session = await this.groupingCardModel.db.startSession();
     session.startTransaction();
 
     try {
-      const updatedCard = await this.groupingCardModel.findByIdAndUpdate(
-        id,
-        updateGroupingCardDto,
-        {
-          new: true,
-          runValidators: true,
-          session,
-        },
-      );
+      const updatedCard = await this.groupingCardModel
+        .findByIdAndUpdate(
+          id,
+          { status: CardStatus.VALIDATED },
+          {
+            new: true,
+            runValidators: true,
+            session,
+          },
+        )
+        .lean()
+        .exec();
 
       if (!updatedCard) {
         throw new Error('Grouping card not found');
@@ -457,7 +697,17 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createGroupingCardNodes({
-        ...updateGroupingCardDto,
+        name: updatedCard.name,
+        meetingPlace: updatedCard.meetingPlace,
+        startDate: updatedCard.startDate,
+        endDate: updatedCard.endDate,
+        generalCharacteristics: updatedCard.generalCharacteristics,
+        members: updatedCard.members,
+        groupPublications: updatedCard.groupPublications,
+        groupActivities: updatedCard.groupActivities,
+        multimedia: updatedCard.multimedia,
+        criticism: updatedCard.criticism,
+        text: updatedCard.text,
         id,
       });
 

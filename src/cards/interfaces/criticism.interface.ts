@@ -9,4 +9,5 @@ export interface Criticism {
   bibliographicReference?: string;
   description?: string;
   multimedia?: Multimedia[];
+  text?: string;
 }

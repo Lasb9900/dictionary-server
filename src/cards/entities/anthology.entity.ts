@@ -47,6 +47,9 @@ export class AnthologyCard {
 
   @Prop()
   criticism: Criticism[];
+
+  @Prop()
+  text: string;
 }
 
 export const AnthologyCardSchema = SchemaFactory.createForClass(AnthologyCard);

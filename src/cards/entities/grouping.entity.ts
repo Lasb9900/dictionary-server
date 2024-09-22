@@ -50,6 +50,9 @@ export class GroupingCard {
 
   @Prop()
   criticism: Criticism[];
+
+  @Prop()
+  text: string;
 }
 
 export const GroupingCardSchema = SchemaFactory.createForClass(GroupingCard);

@@ -9,4 +9,5 @@ export interface Work {
   publicationPlace?: Publication;
   description?: string;
   multimedia?: Multimedia[];
+  text?: string;
 }

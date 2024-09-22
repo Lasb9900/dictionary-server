@@ -34,6 +34,7 @@
     "cypher-query-builder": "^6.0.4",
     "joi": "^17.13.3",
     "mongoose": "^8.4.3",
+    "openai": "^4.63.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.1.13",

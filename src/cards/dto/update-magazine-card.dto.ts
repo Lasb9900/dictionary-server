@@ -1,8 +1,8 @@
-import { IsString, IsArray, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsArray, IsOptional } from 'class-validator';
 import { Multimedia } from '../interfaces/multimedia.interface';
-import { Publication } from '../interfaces/publication-place.interface';
 import { MagazineCreator } from '../interfaces/magazine-creator.interface';
 import { Criticism } from '../interfaces/criticism.interface';
+import { MagazineIssue } from '../interfaces/number.interface';
 
 export class UpdateMagazineCardDto {
   @IsOptional()
@@ -14,19 +14,8 @@ export class UpdateMagazineCardDto {
   originalLanguage?: string;
 
   @IsOptional()
-  @IsString()
-  firstIssueDate?: string;
-
-  @IsOptional()
-  @IsString()
-  lastIssueDate?: string;
-
-  @IsOptional()
-  @IsNumber()
-  issuesPublished?: number;
-
-  @IsOptional()
-  publicationPlace?: Publication;
+  @IsArray()
+  numbers?: MagazineIssue[];
 
   @IsOptional()
   @IsArray()
@@ -47,4 +36,8 @@ export class UpdateMagazineCardDto {
   @IsOptional()
   @IsArray()
   criticism: Criticism[];
+
+  @IsOptional()
+  @IsString()
+  text: string;
 }

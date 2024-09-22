@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Publication } from '../interfaces/publication-place.interface';
 import { User } from 'src/users/entities/user.entity';
 import { MagazineCreator } from '../interfaces/magazine-creator.interface';
 import { Multimedia } from '../interfaces/multimedia.interface';
 import { CardStatus } from '../interfaces/card-status.interface';
 import { Criticism } from '../interfaces/criticism.interface';
+import { MagazineIssue } from '../interfaces/number.interface';
 
 @Schema()
 export class MagazineCard {
@@ -22,23 +22,8 @@ export class MagazineCard {
   @Prop()
   originalLanguage: string;
 
-  @Prop()
-  firstIssueDate: string;
-
-  @Prop()
-  lastIssueDate: string;
-
-  @Prop()
-  issuesPublished: number;
-
-  @Prop({
-    type: {
-      city: { type: String },
-      printingHouse: { type: String },
-      publisher: { type: String },
-    },
-  })
-  publicationPlace: Publication;
+  @Prop({ type: [Object] })
+  numbers: MagazineIssue[];
 
   @Prop()
   creators: MagazineCreator[];
@@ -54,6 +39,9 @@ export class MagazineCard {
 
   @Prop()
   criticism: Criticism[];
+
+  @Prop()
+  text: string;
 }
 
 export const MagazineCardSchema = SchemaFactory.createForClass(MagazineCard);

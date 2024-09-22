@@ -65,4 +65,8 @@ export class UpdateAuthorCardDto {
   @IsOptional()
   @IsArray()
   criticism: Criticism[];
+
+  @IsOptional()
+  @IsString()
+  text: string;
 }

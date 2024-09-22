@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { EnvConfiguration } from './config/env.config';
 import { JoiValidationSchema } from './config/joi.validation';
 import { Neo4jModule } from './neo4j/neo4j.module';
+import { OpenaiModule } from './openai/openai.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { Neo4jModule } from './neo4j/neo4j.module';
     CardsModule,
     UsersModule,
     Neo4jModule.forRootAsync(),
+    OpenaiModule,
   ],
 })
 export class AppModule {}

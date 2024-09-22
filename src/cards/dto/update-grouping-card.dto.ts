@@ -44,4 +44,8 @@ export class UpdateGroupingCardDto {
   @IsOptional()
   @IsArray()
   criticism: Criticism[];
+
+  @IsOptional()
+  @IsString()
+  text: string;
 }

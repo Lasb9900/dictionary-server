@@ -10,6 +10,7 @@ import {
 } from './entities/anthology.entity';
 import { MagazineCard, MagazineCardSchema } from './entities/magazine.entity';
 import { GroupingCard, GroupingCardSchema } from './entities/grouping.entity';
+import { OpenaiModule } from 'src/openai/openai.module';
 
 @Module({
   controllers: [CardsController],
@@ -27,6 +28,7 @@ import { GroupingCard, GroupingCardSchema } from './entities/grouping.entity';
         ],
       },
     ]),
+    OpenaiModule,
   ],
 })
 export class CardsModule {}

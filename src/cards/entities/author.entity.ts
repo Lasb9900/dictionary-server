@@ -61,6 +61,9 @@ export class AuthorCard {
 
   @Prop()
   criticism: Criticism[];
+
+  @Prop()
+  text: string;
 }
 
 export const AuthorCardSchema = SchemaFactory.createForClass(AuthorCard);

@@ -30,28 +30,28 @@ export class CardsController {
   async getAuthorCardById(@Param('id') id: string) {
     const fields =
       'fullName gender pseudonym dateOfBirth dateOfDeath placeOfBirth placeOfDeath relatives relevantActivities mainTheme mainGenre context multimedia works criticism';
-    return this.cardsService.getCardById(id, 'author', fields);
+    return this.cardsService.getCardById(id, fields);
   }
 
   @Get('magazine/:id')
   async getMagazineCardById(@Param('id') id: string) {
     const fields =
       'magazineTitle originalLanguage firstIssueDate lastIssueDate issuesPublished publicationPlace creators sections description multimedia criticism';
-    return this.cardsService.getCardById(id, 'magazine', fields);
+    return this.cardsService.getCardById(id, fields);
   }
 
   @Get('anthology/:id')
   async getAnthologyCardById(@Param('id') id: string) {
     const fields =
       'anthologyTitle genre author originalLanguage publicationDate publicationPlace description multimedia criticism';
-    return this.cardsService.getCardById(id, 'anthology', fields);
+    return this.cardsService.getCardById(id, fields);
   }
 
   @Get('grouping/:id')
   async getGroupingCardById(@Param('id') id: string) {
     const fields =
       'name meetingPlace startDate endDate generalCharacteristics members groupPublications groupActivities multimedia criticism';
-    return this.cardsService.getCardById(id, 'grouping', fields);
+    return this.cardsService.getCardById(id, fields);
   }
 
   @Put(':id')
@@ -99,7 +99,10 @@ export class CardsController {
     @Param('id') id: string,
     @Body() updateCardDto: UpdateAuthorCardDto,
   ): Promise<Card> {
-    return this.cardsService.saveAuthorCardContent(id, updateCardDto);
+    return this.cardsService.updateAuthorCardAndSetPendingReview(
+      id,
+      updateCardDto,
+    );
   }
 
   @Put('update/magazine/:id')
@@ -107,7 +110,10 @@ export class CardsController {
     @Param('id') id: string,
     @Body() updateCardDto: UpdateMagazineCardDto,
   ): Promise<Card> {
-    return this.cardsService.saveMagazineCardContent(id, updateCardDto);
+    return this.cardsService.updateMagazineCardAndSetPendingReview(
+      id,
+      updateCardDto,
+    );
   }
 
   @Put('update/anthology/:id')
@@ -115,7 +121,10 @@ export class CardsController {
     @Param('id') id: string,
     @Body() updateCardDto: UpdateAnthologyCardDto,
   ): Promise<Card> {
-    return this.cardsService.saveAnthologyCardContent(id, updateCardDto);
+    return this.cardsService.updateAnthologyCardAndSetPendingReview(
+      id,
+      updateCardDto,
+    );
   }
 
   @Put('update/grouping/:id')
@@ -123,7 +132,10 @@ export class CardsController {
     @Param('id') id: string,
     @Body() updateCardDto: UpdateGroupingCardDto,
   ): Promise<Card> {
-    return this.cardsService.saveGroupingCardContent(id, updateCardDto);
+    return this.cardsService.updateGroupingCardAndSetPendingReview(
+      id,
+      updateCardDto,
+    );
   }
 
   @Put('upload/author/:id')
@@ -135,27 +147,18 @@ export class CardsController {
   }
 
   @Put('upload/magazine/:id')
-  async uploadMagazineCard(
-    @Param('id') id: string,
-    @Body() updateCardDto: UpdateMagazineCardDto,
-  ): Promise<MagazineCard> {
-    return this.cardsService.uploadMagazineCard(id, updateCardDto);
+  async uploadMagazineCard(@Param('id') id: string): Promise<MagazineCard> {
+    return this.cardsService.uploadMagazineCard(id);
   }
 
   @Put('upload/anthology/:id')
-  async uploadAnthologyCard(
-    @Param('id') id: string,
-    @Body() updateAnthologyCardDto: UpdateAnthologyCardDto,
-  ): Promise<AnthologyCard> {
-    return this.cardsService.uploadAnthologyCard(id, updateAnthologyCardDto);
+  async uploadAnthologyCard(@Param('id') id: string): Promise<AnthologyCard> {
+    return this.cardsService.uploadAnthologyCard(id);
   }
 
   @Put('upload/grouping/:id')
-  async uploadGroupingCard(
-    @Param('id') id: string,
-    @Body() updateGroupingCardDto: UpdateGroupingCardDto,
-  ): Promise<GroupingCard> {
-    return this.cardsService.uploadGroupingCard(id, updateGroupingCardDto);
+  async uploadGroupingCard(@Param('id') id: string): Promise<GroupingCard> {
+    return this.cardsService.uploadGroupingCard(id);
   }
 
   @Get('status/pending-edit')
