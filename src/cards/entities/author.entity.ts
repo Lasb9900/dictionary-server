@@ -16,6 +16,7 @@ export class AuthorCard {
   status: CardStatus;
   assignedEditors: User[];
   assignedReviewers: User[];
+  observation: string;
 
   @Prop()
   fullName: string;

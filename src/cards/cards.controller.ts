@@ -197,4 +197,22 @@ export class CardsController {
   ): Promise<Card[]> {
     return this.cardsService.findAllValidatedCardsByUser(userId);
   }
+
+  @Post(':id/reject')
+  async rejectCard(
+    @Param('id') id: string,
+    @Body('observation') observation: string,
+  ): Promise<Card> {
+    return this.cardsService.rejectCard(id, observation);
+  }
+
+  @Post(':id/mark-pending-edit')
+  async markCardAsPendingEdit(@Param('id') id: string): Promise<Card> {
+    return this.cardsService.markCardAsPendingEdit(id);
+  }
+
+  @Get('/rejected')
+  async findAllRejectedCards(): Promise<Card[]> {
+    return this.cardsService.findAllRejectedCards();
+  }
 }

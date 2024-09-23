@@ -15,6 +15,7 @@ export class MagazineCard {
   status: CardStatus;
   assignedEditors: User[];
   assignedReviewers: User[];
+  observation: string;
 
   @Prop()
   magazineTitle: string;

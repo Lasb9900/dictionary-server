@@ -37,6 +37,9 @@ export class Card extends Document {
 
   @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User', index: true })
   assignedReviewers: User[];
+
+  @Prop({ type: String })
+  observation: string;
 }
 
 export const CardSchema = SchemaFactory.createForClass(Card);

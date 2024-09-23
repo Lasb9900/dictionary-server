@@ -14,6 +14,7 @@ export class AnthologyCard {
   status: CardStatus;
   assignedEditors: User[];
   assignedReviewers: User[];
+  observation: string;
 
   @Prop()
   anthologyTitle: string;

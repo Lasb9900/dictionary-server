@@ -760,6 +760,19 @@ export class CardsService {
       .exec();
   }
 
+  async findAllRejectedCards(): Promise<Card[]> {
+    try {
+      return await this.cardModel
+        .find({ status: CardStatus.REJECTED })
+        .populate('assignedEditors', '_id fullName email imageUrl')
+        .populate('assignedReviewers', '_id fullName email imageUrl')
+        .exec();
+    } catch (error) {
+      console.error('Error retrieving rejected cards:', error);
+      throw new Error('Failed to retrieve rejected cards.');
+    }
+  }
+
   async findAllByUser(userId: string): Promise<Card[]> {
     return await this.cardModel
       .find({
@@ -807,5 +820,49 @@ export class CardsService {
       .populate('assignedEditors', '_id fullName email imageUrl')
       .populate('assignedReviewers', '_id fullName email imageUrl')
       .exec();
+  }
+
+  async rejectCard(id: string, observation: string): Promise<Card> {
+    try {
+      const updatedCard = await this.cardModel.findByIdAndUpdate(
+        id,
+        { status: CardStatus.REJECTED, observation },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      if (!updatedCard) {
+        throw new Error('Card not found');
+      }
+
+      return updatedCard;
+    } catch (error) {
+      console.error('Error rejecting card:', error);
+      throw new Error('Failed to reject card. Please try again later.');
+    }
+  }
+
+  async markCardAsPendingEdit(id: string): Promise<Card> {
+    try {
+      const updatedCard = await this.cardModel.findByIdAndUpdate(
+        id,
+        { status: CardStatus.PENDING_EDIT },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      if (!updatedCard) {
+        throw new Error('Card not found');
+      }
+
+      return updatedCard;
+    } catch (error) {
+      console.error('Error marking card as pending edit:', error);
+      throw new Error('Failed to update card. Please try again later.');
+    }
   }
 }

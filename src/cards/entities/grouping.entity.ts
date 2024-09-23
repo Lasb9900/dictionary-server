@@ -15,6 +15,7 @@ export class GroupingCard {
   status: CardStatus;
   assignedEditors: User[];
   assignedReviewers: User[];
+  observation: string;
 
   @Prop()
   name: string;
