@@ -937,21 +937,35 @@ export class CardsService {
         case 'GroupingCard':
           const groupingCard = await this.groupingCardModel
             .findById(id)
-            .select('magazineTitle text criticism')
+            .select('name text criticism')
             .populate('criticism', 'title text')
             .exec();
           return {
-            magazine: {
-              title: magazineCard.magazineTitle,
-              text: magazineCard.text,
+            grouping: {
+              title: groupingCard.name,
+              text: groupingCard.text,
             },
-            criticism: magazineCard.criticism.map((criticism) => ({
+            criticism: groupingCard.criticism.map((criticism) => ({
               title: criticism.title,
               text: criticism.text,
             })),
           };
         case 'AnthologyCard':
-          return this.anthologyCardModel.findById(id).select('text').exec();
+          const anthologyCard = await this.anthologyCardModel
+            .findById(id)
+            .select('title text criticism')
+            .populate('criticism', 'title text')
+            .exec();
+          return {
+            anthology: {
+              title: anthologyCard.title,
+              text: anthologyCard.text,
+            },
+            criticism: anthologyCard.criticism.map((criticism) => ({
+              title: criticism.title,
+              text: criticism.text,
+            })),
+          };
         default:
           throw new Error('Invalid card type');
       }
