@@ -21,6 +21,11 @@ export class CardsController {
     return this.cardsService.createCard(createCardDto);
   }
 
+  @Get('texts/:id')
+  async getCardTextsById(@Param('id') id: string): Promise<any> {
+    return this.cardsService.getCardTextsById(id);
+  }
+
   @Get()
   async findAllCards(): Promise<Card[]> {
     return this.cardsService.findAllCards();
@@ -36,7 +41,7 @@ export class CardsController {
   @Get('magazine/:id')
   async getMagazineCardById(@Param('id') id: string) {
     const fields =
-      'magazineTitle originalLanguage firstIssueDate lastIssueDate issuesPublished publicationPlace creators sections description multimedia criticism';
+      'magazineTitle originalLanguage numbers publicationPlace creators sections description multimedia criticism';
     return this.cardsService.getCardById(id, fields);
   }
 

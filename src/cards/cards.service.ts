@@ -865,4 +865,136 @@ export class CardsService {
       throw new Error('Failed to update card. Please try again later.');
     }
   }
+
+  async getCardTextsById(id: string): Promise<any> {
+    try {
+      const card = await this.cardModel.findById(id).exec();
+
+      if (!card) {
+        throw new Error('Card not found');
+      }
+
+      if (card.type === 'AuthorCard') {
+        const authorCard = await this.authorCardModel
+          .findById(id)
+          .select('fullName text works criticism')
+          .populate('works', 'title text')
+          .populate('criticism', 'title text')
+          .exec();
+
+        if (!authorCard) {
+          throw new Error('Author card not found');
+        }
+
+        return {
+          author: {
+            title: authorCard.fullName,
+            text: authorCard.text,
+          },
+          works: authorCard.works.map((work) => ({
+            title: work.title,
+            text: work.text,
+          })),
+          criticism: authorCard.criticism.map((criticism) => ({
+            title: criticism.title,
+            text: criticism.text,
+          })),
+        };
+      }
+
+      switch (card.type) {
+        case 'magazine':
+          return this.magazineCardModel.findById(id).select('text').exec();
+        case 'grouping':
+          return this.groupingCardModel.findById(id).select('text').exec();
+        default:
+          throw new Error('Invalid card type');
+      }
+    } catch (error) {
+      console.error('Error fetching card texts:', error);
+      throw new Error('Failed to fetch card texts. Please try again later.');
+    }
+  }
+
+  async saveCardTexts(
+    id: string,
+    text: string,
+    works: string[],
+    criticism: string[],
+  ): Promise<Card> {
+    const session = await this.authorCardModel.db.startSession();
+    session.startTransaction();
+
+    try {
+      const card = await this.cardModel.findById(id).exec();
+
+      if (!card) {
+        throw new Error('Card not found');
+      }
+
+      let updatedCard;
+      if (card.type === 'author') {
+        const updateData: any = { text };
+
+        if (works && works.length > 0) {
+          updateData['works'] = works.map((workText) => ({
+            text: workText,
+          }));
+        }
+
+        if (criticism && criticism.length > 0) {
+          updateData['criticism'] = criticism.map((critText) => ({
+            text: critText,
+          }));
+        }
+
+        updatedCard = await this.authorCardModel.findByIdAndUpdate(
+          id,
+          updateData,
+          {
+            new: true,
+            runValidators: true,
+            session,
+          },
+        );
+
+        if (!updatedCard) {
+          throw new Error('Failed to save author card texts');
+        }
+      } else {
+        switch (card.type) {
+          case 'magazine':
+            updatedCard = await this.magazineCardModel.findByIdAndUpdate(
+              id,
+              { text },
+              { new: true, runValidators: true, session },
+            );
+            break;
+          case 'grouping':
+            updatedCard = await this.groupingCardModel.findByIdAndUpdate(
+              id,
+              { text },
+              { new: true, runValidators: true, session },
+            );
+            break;
+          default:
+            throw new Error('Invalid card type');
+        }
+
+        if (!updatedCard) {
+          throw new Error('Failed to save card text');
+        }
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return updatedCard;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      console.error('Error saving card texts:', error);
+      throw new Error(`Transaction failed: ${error.message}`);
+    }
+  }
 }
