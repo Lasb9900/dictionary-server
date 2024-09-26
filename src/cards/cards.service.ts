@@ -992,9 +992,9 @@ export class CardsService {
       }
 
       let updatedCard;
-      if (card.type === 'AuthorCard') {
-        const updateData: any = { text };
+      const updateData: any = { text };
 
+      if (card.type === 'AuthorCard') {
         if (works && works.length > 0) {
           updateData['works'] = works.map((workText) => ({
             text: workText,
@@ -1021,25 +1021,31 @@ export class CardsService {
           throw new Error('Failed to save author card texts');
         }
       } else {
+        if (criticism && criticism.length > 0) {
+          updateData['criticism'] = criticism.map((critText) => ({
+            text: critText,
+          }));
+        }
+
         switch (card.type) {
           case 'MagazineCard':
             updatedCard = await this.magazineCardModel.findByIdAndUpdate(
               id,
-              { text },
+              updateData,
               { new: true, runValidators: true, session },
             );
             break;
           case 'GroupingCard':
             updatedCard = await this.groupingCardModel.findByIdAndUpdate(
               id,
-              { text },
+              updateData,
               { new: true, runValidators: true, session },
             );
             break;
           case 'AnthologyCard':
             updatedCard = await this.anthologyCardModel.findByIdAndUpdate(
               id,
-              { text },
+              updateData,
               { new: true, runValidators: true, session },
             );
             break;
