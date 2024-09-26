@@ -200,7 +200,7 @@ export class CardsController {
     return this.cardsService.findAllValidatedCardsByUser(userId);
   }
 
-  @Post(':id/reject')
+  @Post('reject/:id')
   async rejectCard(
     @Param('id') id: string,
     @Body('observation') observation: string,

@@ -281,7 +281,11 @@ export class CardsService {
 
       const updatedCard = await this.authorCardModel.findByIdAndUpdate(
         id,
-        { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
+        {
+          ...updateCardDto,
+          status: CardStatus.PENDING_REVIEW,
+          observation: '',
+        },
         {
           new: true,
           runValidators: true,
@@ -361,7 +365,11 @@ export class CardsService {
 
       const updatedCard = await this.magazineCardModel.findByIdAndUpdate(
         id,
-        { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
+        {
+          ...updateCardDto,
+          status: CardStatus.PENDING_REVIEW,
+          observation: '',
+        },
         {
           new: true,
           runValidators: true,
@@ -433,7 +441,11 @@ export class CardsService {
 
       const updatedCard = await this.anthologyCardModel.findByIdAndUpdate(
         id,
-        { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
+        {
+          ...updateCardDto,
+          status: CardStatus.PENDING_REVIEW,
+          observation: '',
+        },
         {
           new: true,
           runValidators: true,
@@ -512,7 +524,11 @@ export class CardsService {
 
       const updatedCard = await this.groupingCardModel.findByIdAndUpdate(
         id,
-        { ...updateCardDto, status: CardStatus.PENDING_REVIEW },
+        {
+          ...updateCardDto,
+          status: CardStatus.PENDING_REVIEW,
+          observation: '',
+        },
         {
           new: true,
           runValidators: true,
