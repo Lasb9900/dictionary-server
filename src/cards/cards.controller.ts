@@ -220,4 +220,17 @@ export class CardsController {
   async findAllRejectedCards(): Promise<Card[]> {
     return this.cardsService.findAllRejectedCards();
   }
+
+  @Post('/save-texts/:id')
+  async saveCardTexts(
+    @Param('id') id: string,
+    @Body() body: { text: string; works: string[]; criticism: string[] },
+  ): Promise<Card> {
+    return this.cardsService.saveCardTexts(
+      id,
+      body.text,
+      body.works,
+      body.criticism,
+    );
+  }
 }
