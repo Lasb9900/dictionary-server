@@ -394,4 +394,17 @@ export class QueryRepository implements OnApplicationShutdown {
       )
       .run();
   }
+
+  async encodeWorkDescription(openAiToken: any): Promise<void> {
+    const query = this.connection.query();
+
+    await query
+      .raw(
+        `
+
+        `,
+        openAiToken,
+      )
+      .run();
+  }
 }

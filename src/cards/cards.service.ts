@@ -535,23 +535,23 @@ export class CardsService {
     }
   }
 
-  async uploadAuthorCard(
-    id: string,
-    updateCardDto: UpdateAuthorCardDto,
-  ): Promise<AuthorCard> {
+  async uploadAuthorCard(id: string): Promise<AuthorCard> {
     const session = await this.authorCardModel.db.startSession();
     session.startTransaction();
 
     try {
-      const updatedCard = await this.authorCardModel.findByIdAndUpdate(
-        id,
-        { status: CardStatus.VALIDATED },
-        {
-          new: true,
-          runValidators: true,
-          session,
-        },
-      );
+      const updatedCard = await this.authorCardModel
+        .findByIdAndUpdate(
+          id,
+          { status: CardStatus.VALIDATED },
+          {
+            new: true,
+            runValidators: true,
+            session,
+          },
+        )
+        .lean()
+        .exec();
 
       if (!updatedCard) {
         throw new Error('Card not found');
@@ -560,7 +560,22 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createAuthorCardNodes({
-        ...updateCardDto,
+        fullName: updatedCard.fullName,
+        pseudonym: updatedCard.pseudonym,
+        dateOfBirth: updatedCard.dateOfBirth,
+        dateOfDeath: updatedCard.dateOfDeath,
+        placeOfBirth: updatedCard.placeOfBirth,
+        placeOfDeath: updatedCard.placeOfDeath,
+        relatives: updatedCard.relatives,
+        relevantActivities: updatedCard.relevantActivities,
+        mainTheme: updatedCard.mainTheme,
+        mainGenre: updatedCard.mainGenre,
+        context: updatedCard.context,
+        multimedia: updatedCard.multimedia,
+        works: updatedCard.works,
+        criticism: updatedCard.criticism,
+        gender: updatedCard.gender,
+        text: updatedCard.text,
         id,
       });
 
@@ -933,7 +948,7 @@ export class CardsService {
       }
 
       let updatedCard;
-      if (card.type === 'author') {
+      if (card.type === 'AuthorCard') {
         const updateData: any = { text };
 
         if (works && works.length > 0) {
@@ -963,15 +978,22 @@ export class CardsService {
         }
       } else {
         switch (card.type) {
-          case 'magazine':
+          case 'MagazineCard':
             updatedCard = await this.magazineCardModel.findByIdAndUpdate(
               id,
               { text },
               { new: true, runValidators: true, session },
             );
             break;
-          case 'grouping':
+          case 'GroupingCard':
             updatedCard = await this.groupingCardModel.findByIdAndUpdate(
+              id,
+              { text },
+              { new: true, runValidators: true, session },
+            );
+            break;
+          case 'AnthologyCard':
+            updatedCard = await this.anthologyCardModel.findByIdAndUpdate(
               id,
               { text },
               { new: true, runValidators: true, session },

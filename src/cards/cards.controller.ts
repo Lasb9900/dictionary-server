@@ -144,11 +144,8 @@ export class CardsController {
   }
 
   @Put('upload/author/:id')
-  async uploadAuthorCard(
-    @Param('id') id: string,
-    @Body() updateCardDto: UpdateAuthorCardDto,
-  ): Promise<AuthorCard> {
-    return this.cardsService.uploadAuthorCard(id, updateCardDto);
+  async uploadAuthorCard(@Param('id') id: string): Promise<AuthorCard> {
+    return this.cardsService.uploadAuthorCard(id);
   }
 
   @Put('upload/magazine/:id')
