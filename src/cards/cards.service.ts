@@ -918,10 +918,40 @@ export class CardsService {
       }
 
       switch (card.type) {
-        case 'magazine':
-          return this.magazineCardModel.findById(id).select('text').exec();
-        case 'grouping':
-          return this.groupingCardModel.findById(id).select('text').exec();
+        case 'MagazineCard':
+          const magazineCard = await this.magazineCardModel
+            .findById(id)
+            .select('magazineTitle text criticism')
+            .populate('criticism', 'title text')
+            .exec();
+          return {
+            magazine: {
+              title: magazineCard.magazineTitle,
+              text: magazineCard.text,
+            },
+            criticism: magazineCard.criticism.map((criticism) => ({
+              title: criticism.title,
+              text: criticism.text,
+            })),
+          };
+        case 'GroupingCard':
+          const groupingCard = await this.groupingCardModel
+            .findById(id)
+            .select('magazineTitle text criticism')
+            .populate('criticism', 'title text')
+            .exec();
+          return {
+            magazine: {
+              title: magazineCard.magazineTitle,
+              text: magazineCard.text,
+            },
+            criticism: magazineCard.criticism.map((criticism) => ({
+              title: criticism.title,
+              text: criticism.text,
+            })),
+          };
+        case 'AnthologyCard':
+          return this.anthologyCardModel.findById(id).select('text').exec();
         default:
           throw new Error('Invalid card type');
       }
