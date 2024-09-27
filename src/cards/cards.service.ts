@@ -57,16 +57,16 @@ export class CardsService {
 
     try {
       switch (type) {
-        case 'author':
+        case 'AuthorCard':
           createdCard = new this.authorCardModel(data);
           break;
-        case 'anthology':
+        case 'AnthologyCard':
           createdCard = new this.anthologyCardModel(data);
           break;
-        case 'magazine':
+        case 'MagazineCard':
           createdCard = new this.magazineCardModel(data);
           break;
-        case 'grouping':
+        case 'GroupingCard':
           createdCard = new this.groupingCardModel(data);
           break;
         default:
