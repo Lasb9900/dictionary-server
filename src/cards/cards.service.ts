@@ -82,6 +82,7 @@ export class CardsService {
 
   async updateCard(id: string, updateCardDto: UpdateCardDto): Promise<Card> {
     try {
+      console.log('updateCardDto', updateCardDto);
       const updatedCard = await this.cardModel.findByIdAndUpdate(
         id,
         updateCardDto,
