@@ -8,7 +8,7 @@ import {
 
 export class CreateCardDto {
   @IsString()
-  @IsEnum(['AuthorCard', 'AnthologyCard', 'GroupingCard', ',MagazineCard'])
+  @IsEnum(['AuthorCard', 'AnthologyCard', 'GroupingCard', 'MagazineCard'])
   type: string;
 
   @IsString()
