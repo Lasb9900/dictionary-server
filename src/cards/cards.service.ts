@@ -1018,17 +1018,17 @@ export class CardsService {
       }
 
       let updatedCard;
-      const updateData: any = { text };
+      const updateData: any = { $set: { text } };
 
       if (card.type === 'AuthorCard') {
         if (works && works.length > 0) {
-          updateData['works'] = works.map((workText) => ({
+          updateData.$set['works'] = works.map((workText) => ({
             text: workText,
           }));
         }
 
         if (criticism && criticism.length > 0) {
-          updateData['criticism'] = criticism.map((critText) => ({
+          updateData.$set['criticism'] = criticism.map((critText) => ({
             text: critText,
           }));
         }
@@ -1048,7 +1048,7 @@ export class CardsService {
         }
       } else {
         if (criticism && criticism.length > 0) {
-          updateData['criticism'] = criticism.map((critText) => ({
+          updateData.$set['criticism'] = criticism.map((critText) => ({
             text: critText,
           }));
         }
