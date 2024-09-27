@@ -107,6 +107,7 @@ export class CardsService {
     if (!card) {
       throw new BadRequestException('Ficha no encontrada.');
     }
+    await this.queryRepository.deleteCardNodes(cardId);
     return { message: 'Ficha eliminada correctamente.' };
   }
 
@@ -292,7 +293,6 @@ export class CardsService {
         {
           ...updateCardDto,
           status: CardStatus.PENDING_REVIEW,
-          observation: '',
         },
         {
           new: true,
@@ -376,7 +376,6 @@ export class CardsService {
         {
           ...updateCardDto,
           status: CardStatus.PENDING_REVIEW,
-          observation: '',
         },
         {
           new: true,
@@ -452,7 +451,6 @@ export class CardsService {
         {
           ...updateCardDto,
           status: CardStatus.PENDING_REVIEW,
-          observation: '',
         },
         {
           new: true,
@@ -535,7 +533,6 @@ export class CardsService {
         {
           ...updateCardDto,
           status: CardStatus.PENDING_REVIEW,
-          observation: '',
         },
         {
           new: true,
@@ -567,7 +564,7 @@ export class CardsService {
       const updatedCard = await this.authorCardModel
         .findByIdAndUpdate(
           id,
-          { status: CardStatus.VALIDATED },
+          { status: CardStatus.VALIDATED, observation: '' },
           {
             new: true,
             runValidators: true,
@@ -622,7 +619,7 @@ export class CardsService {
       const updatedCard = await this.magazineCardModel
         .findByIdAndUpdate(
           id,
-          { status: CardStatus.VALIDATED },
+          { status: CardStatus.VALIDATED, observation: '' },
           {
             new: true,
             runValidators: true,
@@ -670,7 +667,7 @@ export class CardsService {
       const updatedCard = await this.anthologyCardModel
         .findByIdAndUpdate(
           id,
-          { status: CardStatus.VALIDATED },
+          { status: CardStatus.VALIDATED, observation: '' },
           {
             new: true,
             runValidators: true,
@@ -719,7 +716,7 @@ export class CardsService {
       const updatedCard = await this.groupingCardModel
         .findByIdAndUpdate(
           id,
-          { status: CardStatus.VALIDATED },
+          { status: CardStatus.VALIDATED, observation: '' },
           {
             new: true,
             runValidators: true,
