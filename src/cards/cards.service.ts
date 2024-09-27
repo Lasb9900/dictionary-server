@@ -583,21 +583,23 @@ export class CardsService {
 
       await this.queryRepository.createAuthorCardNodes({
         fullName: updatedCard.fullName,
-        pseudonym: updatedCard.pseudonym,
-        dateOfBirth: updatedCard.dateOfBirth,
-        dateOfDeath: updatedCard.dateOfDeath,
-        placeOfBirth: updatedCard.placeOfBirth,
-        placeOfDeath: updatedCard.placeOfDeath,
-        relatives: updatedCard.relatives,
-        relevantActivities: updatedCard.relevantActivities,
-        mainTheme: updatedCard.mainTheme,
-        mainGenre: updatedCard.mainGenre,
-        context: updatedCard.context,
-        multimedia: updatedCard.multimedia,
-        works: updatedCard.works,
-        criticism: updatedCard.criticism,
-        gender: updatedCard.gender,
-        text: updatedCard.text,
+        pseudonym: !updatedCard.pseudonym ? '' : updatedCard.pseudonym,
+        dateOfBirth: !updatedCard.dateOfBirth ? '' : updatedCard.dateOfBirth,
+        dateOfDeath: !updatedCard.dateOfDeath ? '' : updatedCard.dateOfDeath,
+        placeOfBirth: !updatedCard.placeOfBirth ? '' : updatedCard.placeOfBirth,
+        placeOfDeath: !updatedCard.placeOfDeath ? '' : updatedCard.placeOfDeath,
+        relatives: !updatedCard.relatives ? '' : updatedCard.relatives,
+        relevantActivities: !updatedCard.relevantActivities
+          ? ''
+          : updatedCard.relevantActivities,
+        mainTheme: !updatedCard.mainTheme ? '' : updatedCard.mainTheme,
+        mainGenre: !updatedCard.mainGenre ? '' : updatedCard.mainGenre,
+        context: !updatedCard.context ? '' : updatedCard.context,
+        multimedia: !updatedCard.multimedia ? '' : updatedCard.multimedia,
+        works: !updatedCard.works ? '' : updatedCard.works,
+        criticism: !updatedCard.criticism ? '' : updatedCard.criticism,
+        gender: !updatedCard.gender ? '' : updatedCard.gender,
+        text: !updatedCard.text ? '' : updatedCard.text,
         id,
       });
 
