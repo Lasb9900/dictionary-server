@@ -875,11 +875,11 @@ export class CardsService {
     }
   }
 
-  async markCardAsPendingEdit(id: string): Promise<Card> {
+  async markCardAsPendingEdit(id: string, observation: string): Promise<Card> {
     try {
       const updatedCard = await this.cardModel.findByIdAndUpdate(
         id,
-        { status: CardStatus.PENDING_EDIT },
+        { status: CardStatus.PENDING_EDIT, observation },
         {
           new: true,
           runValidators: true,

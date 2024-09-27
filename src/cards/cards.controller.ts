@@ -208,9 +208,12 @@ export class CardsController {
     return this.cardsService.rejectCard(id, observation);
   }
 
-  @Post(':id/mark-pending-edit')
-  async markCardAsPendingEdit(@Param('id') id: string): Promise<Card> {
-    return this.cardsService.markCardAsPendingEdit(id);
+  @Post('mark-pending-edit/:id')
+  async markCardAsPendingEdit(
+    @Param('id') id: string,
+    @Body('observation') observation: string,
+  ): Promise<Card> {
+    return this.cardsService.markCardAsPendingEdit(id, observation);
   }
 
   @Get('/rejected')
