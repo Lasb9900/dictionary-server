@@ -908,7 +908,7 @@ export class CardsService {
       if (card.type === 'AuthorCard') {
         const authorCard = await this.authorCardModel
           .findById(id)
-          .select('fullName text works criticism')
+          .select('fullName text works criticism observation')
           .populate('works', 'title text')
           .populate('criticism', 'title text')
           .exec();
@@ -930,6 +930,7 @@ export class CardsService {
             title: criticism.title,
             text: criticism.text,
           })),
+          observation: authorCard.observation,
         };
       }
 
@@ -937,7 +938,7 @@ export class CardsService {
         case 'MagazineCard':
           const magazineCard = await this.magazineCardModel
             .findById(id)
-            .select('magazineTitle text criticism')
+            .select('magazineTitle text criticism observation')
             .populate('criticism', 'title text')
             .exec();
           return {
@@ -949,11 +950,12 @@ export class CardsService {
               title: criticism.title,
               text: criticism.text,
             })),
+            observation: magazineCard.observation,
           };
         case 'GroupingCard':
           const groupingCard = await this.groupingCardModel
             .findById(id)
-            .select('name text criticism')
+            .select('name text criticism observation')
             .populate('criticism', 'title text')
             .exec();
           return {
@@ -965,11 +967,12 @@ export class CardsService {
               title: criticism.title,
               text: criticism.text,
             })),
+            observation: groupingCard.observation,
           };
         case 'AnthologyCard':
           const anthologyCard = await this.anthologyCardModel
             .findById(id)
-            .select('title text criticism')
+            .select('title text criticism observation')
             .populate('criticism', 'title text')
             .exec();
           return {
@@ -981,6 +984,7 @@ export class CardsService {
               title: criticism.title,
               text: criticism.text,
             })),
+            observation: anthologyCard.observation,
           };
         default:
           throw new Error('Invalid card type');
