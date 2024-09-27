@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AuthorCard } from './entities/author.entity';
@@ -100,6 +100,14 @@ export class CardsService {
       console.error('Error updating card:', error);
       throw new Error('Failed to update card. Please try again later.');
     }
+  }
+
+  async deleteCard(cardId: string) {
+    const card = await this.cardModel.findByIdAndDelete(cardId).exec();
+    if (!card) {
+      throw new BadRequestException('Ficha no encontrada.');
+    }
+    return { message: 'Ficha eliminada correctamente.' };
   }
 
   async saveAuthorCardContent(

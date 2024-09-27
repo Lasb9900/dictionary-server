@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { CardsService } from './cards.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { Card } from './entities/card.entity';
@@ -24,6 +32,11 @@ export class CardsController {
   @Get('texts/:id')
   async getCardTextsById(@Param('id') id: string): Promise<any> {
     return this.cardsService.getCardTextsById(id);
+  }
+
+  @Delete(':id')
+  async deleteCard(@Param('id') id: string) {
+    return this.cardsService.deleteCard(id);
   }
 
   @Get()
