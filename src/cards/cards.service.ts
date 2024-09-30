@@ -218,7 +218,7 @@ export class CardsService {
     updateCardDto: UpdateAuthorCardDto,
   ): Promise<Card> {
     try {
-      //Generate Author Text
+      // Generate Author Text
       const authorText = await this.openaiService.generateText(
         userSummaryPrompt,
         JSON.stringify({
@@ -252,6 +252,17 @@ export class CardsService {
                 printingHouse: work.publicationPlace?.printingHouse,
                 publisher: work.publicationPlace?.publisher,
               },
+              editions: work.editions.map((edition) => ({
+                publicationDate: edition.publicationDate,
+                editiontitle: edition.editiontitle,
+                language: edition.language,
+                translator: edition.translator,
+                publicationPlace: {
+                  city: edition.publicationPlace?.city,
+                  printingHouse: edition.publicationPlace?.printingHouse,
+                  publisher: edition.publicationPlace?.publisher,
+                },
+              })),
               description: work.description,
             }),
           );
@@ -434,7 +445,6 @@ export class CardsService {
               link: criticism.link,
               bibliographicReference: criticism.bibliographicReference,
               description: criticism.description,
-              text: criticism.text,
             }),
           );
           return criticismText;
@@ -582,24 +592,24 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createAuthorCardNodes({
-        fullName: updatedCard.fullName,
-        pseudonym: !updatedCard.pseudonym ? '' : updatedCard.pseudonym,
-        dateOfBirth: !updatedCard.dateOfBirth ? '' : updatedCard.dateOfBirth,
-        dateOfDeath: !updatedCard.dateOfDeath ? '' : updatedCard.dateOfDeath,
-        placeOfBirth: !updatedCard.placeOfBirth ? '' : updatedCard.placeOfBirth,
-        placeOfDeath: !updatedCard.placeOfDeath ? '' : updatedCard.placeOfDeath,
-        relatives: !updatedCard.relatives ? '' : updatedCard.relatives,
-        relevantActivities: !updatedCard.relevantActivities
-          ? ''
-          : updatedCard.relevantActivities,
-        mainTheme: !updatedCard.mainTheme ? '' : updatedCard.mainTheme,
-        mainGenre: !updatedCard.mainGenre ? '' : updatedCard.mainGenre,
-        context: !updatedCard.context ? '' : updatedCard.context,
-        multimedia: !updatedCard.multimedia ? '' : updatedCard.multimedia,
-        works: !updatedCard.works ? '' : updatedCard.works,
-        criticism: !updatedCard.criticism ? '' : updatedCard.criticism,
-        gender: !updatedCard.gender ? '' : updatedCard.gender,
-        text: !updatedCard.text ? '' : updatedCard.text,
+        fullName: updatedCard.fullName ? updatedCard.fullName : '',
+        pseudonym: updatedCard.pseudonym ? updatedCard.pseudonym : '',
+        dateOfBirth: updatedCard.dateOfBirth ? updatedCard.dateOfBirth : '',
+        dateOfDeath: updatedCard.dateOfDeath ? updatedCard.dateOfDeath : '',
+        placeOfBirth: updatedCard.placeOfBirth ? updatedCard.placeOfBirth : '',
+        placeOfDeath: updatedCard.placeOfDeath ? updatedCard.placeOfDeath : '',
+        relatives: updatedCard.relatives ? updatedCard.relatives : null,
+        relevantActivities: updatedCard.relevantActivities
+          ? updatedCard.relevantActivities
+          : '',
+        mainTheme: updatedCard.mainTheme ? updatedCard.mainTheme : '',
+        mainGenre: updatedCard.mainGenre ? updatedCard.mainGenre : '',
+        context: updatedCard.context ? updatedCard.context : '',
+        multimedia: updatedCard.multimedia ? updatedCard.multimedia : null,
+        works: updatedCard.works ? updatedCard.works : null,
+        criticism: updatedCard.criticism ? updatedCard.criticism : null,
+        gender: updatedCard.gender ? updatedCard.gender : '',
+        text: updatedCard.text ? updatedCard.text : '',
         id,
       });
 
@@ -639,15 +649,19 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createMagazineCardNodes({
-        magazineTitle: updatedCard.magazineTitle,
-        originalLanguage: updatedCard.originalLanguage,
-        sections: updatedCard.sections,
-        description: updatedCard.description,
-        text: updatedCard.text,
-        numbers: updatedCard.numbers,
-        multimedia: updatedCard.multimedia,
-        creators: updatedCard.creators,
-        criticism: updatedCard.criticism,
+        magazineTitle: updatedCard.magazineTitle
+          ? updatedCard.magazineTitle
+          : '',
+        originalLanguage: updatedCard.originalLanguage
+          ? updatedCard.originalLanguage
+          : '',
+        sections: updatedCard.sections ? updatedCard.sections : '',
+        description: updatedCard.description ? updatedCard.description : '',
+        text: updatedCard.text ? updatedCard.text : '',
+        numbers: updatedCard.numbers ? updatedCard.numbers : '',
+        multimedia: updatedCard.multimedia ? updatedCard.multimedia : '',
+        creators: updatedCard.creators ? updatedCard.creators : '',
+        criticism: updatedCard.criticism ? updatedCard.criticism : '',
         id,
       });
 
@@ -687,16 +701,24 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createAnthologyCardNodes({
-        anthologyTitle: updatedCard.anthologyTitle,
-        genre: updatedCard.genre,
-        author: updatedCard.author,
-        originalLanguage: updatedCard.originalLanguage,
-        publicationDate: updatedCard.publicationDate,
-        publicationPlace: updatedCard.publicationPlace,
-        description: updatedCard.description,
-        text: updatedCard.text,
-        multimedia: updatedCard.multimedia,
-        criticism: updatedCard.criticism,
+        anthologyTitle: updatedCard.anthologyTitle
+          ? updatedCard.anthologyTitle
+          : '',
+        genre: updatedCard.genre ? updatedCard.genre : '',
+        author: updatedCard.author ? updatedCard.author : '',
+        originalLanguage: updatedCard.originalLanguage
+          ? updatedCard.originalLanguage
+          : '',
+        publicationDate: updatedCard.publicationDate
+          ? updatedCard.publicationDate
+          : '',
+        publicationPlace: updatedCard.publicationPlace
+          ? updatedCard.publicationPlace
+          : '',
+        description: updatedCard.description ? updatedCard.description : '',
+        text: updatedCard.text ? updatedCard.text : '',
+        multimedia: updatedCard.multimedia ? updatedCard.multimedia : '',
+        criticism: updatedCard.criticism ? updatedCard.criticism : '',
         id,
       });
 
@@ -736,17 +758,23 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createGroupingCardNodes({
-        name: updatedCard.name,
-        meetingPlace: updatedCard.meetingPlace,
-        startDate: updatedCard.startDate,
-        endDate: updatedCard.endDate,
-        generalCharacteristics: updatedCard.generalCharacteristics,
-        members: updatedCard.members,
-        groupPublications: updatedCard.groupPublications,
-        groupActivities: updatedCard.groupActivities,
-        multimedia: updatedCard.multimedia,
-        criticism: updatedCard.criticism,
-        text: updatedCard.text,
+        name: updatedCard.name ? updatedCard.name : '',
+        meetingPlace: updatedCard.meetingPlace ? updatedCard.meetingPlace : '',
+        startDate: updatedCard.startDate ? updatedCard.startDate : '',
+        endDate: updatedCard.endDate ? updatedCard.endDate : '',
+        generalCharacteristics: updatedCard.generalCharacteristics
+          ? updatedCard.generalCharacteristics
+          : '',
+        members: updatedCard.members ? updatedCard.members : '',
+        groupPublications: updatedCard.groupPublications
+          ? updatedCard.groupPublications
+          : '',
+        groupActivities: updatedCard.groupActivities
+          ? updatedCard.groupActivities
+          : '',
+        multimedia: updatedCard.multimedia ? updatedCard.multimedia : '',
+        criticism: updatedCard.criticism ? updatedCard.criticism : '',
+        text: updatedCard.text ? updatedCard.text : '',
         id,
       });
 
@@ -917,8 +945,8 @@ export class CardsService {
         const authorCard = await this.authorCardModel
           .findById(id)
           .select('fullName text works criticism observation')
-          .populate('works', 'title text')
-          .populate('criticism', 'title text')
+          .populate('works')
+          .populate('criticism')
           .exec();
 
         if (!authorCard) {
@@ -930,14 +958,8 @@ export class CardsService {
             title: authorCard.fullName,
             text: authorCard.text,
           },
-          works: authorCard.works.map((work) => ({
-            title: work.title,
-            text: work.text,
-          })),
-          criticism: authorCard.criticism.map((criticism) => ({
-            title: criticism.title,
-            text: criticism.text,
-          })),
+          works: authorCard.works,
+          criticism: authorCard.criticism,
           observation: authorCard.observation,
         };
       }
@@ -947,51 +969,42 @@ export class CardsService {
           const magazineCard = await this.magazineCardModel
             .findById(id)
             .select('magazineTitle text criticism observation')
-            .populate('criticism', 'title text')
+            .populate('criticism')
             .exec();
           return {
             magazine: {
               title: magazineCard.magazineTitle,
               text: magazineCard.text,
             },
-            criticism: magazineCard.criticism.map((criticism) => ({
-              title: criticism.title,
-              text: criticism.text,
-            })),
+            criticism: magazineCard.criticism,
             observation: magazineCard.observation,
           };
         case 'GroupingCard':
           const groupingCard = await this.groupingCardModel
             .findById(id)
             .select('name text criticism observation')
-            .populate('criticism', 'title text')
+            .populate('criticism')
             .exec();
           return {
             grouping: {
               title: groupingCard.name,
               text: groupingCard.text,
             },
-            criticism: groupingCard.criticism.map((criticism) => ({
-              title: criticism.title,
-              text: criticism.text,
-            })),
+            criticism: groupingCard.criticism,
             observation: groupingCard.observation,
           };
         case 'AnthologyCard':
           const anthologyCard = await this.anthologyCardModel
             .findById(id)
             .select('title text criticism observation')
-            .populate('criticism', 'title text')
+            .populate('criticism')
             .exec();
           return {
             anthology: {
               title: anthologyCard.title,
               text: anthologyCard.text,
             },
-            criticism: anthologyCard.criticism.map((criticism) => ({
-              title: criticism.title,
-              text: criticism.text,
-            })),
+            criticism: anthologyCard.criticism,
             observation: anthologyCard.observation,
           };
         default:
@@ -1003,7 +1016,7 @@ export class CardsService {
     }
   }
 
-  async saveCardTexts(
+  async saveAuthorCardTexts(
     id: string,
     text: string,
     works: string[],
@@ -1013,84 +1026,25 @@ export class CardsService {
     session.startTransaction();
 
     try {
-      const card = await this.cardModel.findById(id).exec();
+      const updatedCard = await this.authorCardModel.findByIdAndUpdate(
+        id,
+        { text, works, criticism },
+        {
+          new: true,
+          runValidators: true,
+          session,
+        },
+      );
 
-      if (!card) {
+      if (!updatedCard) {
         throw new Error('Card not found');
       }
-
-      let updatedCard;
-      const updateData: any = { $set: { text } };
-
-      if (card.type === 'AuthorCard') {
-        if (works && works.length > 0) {
-          updateData.$set['works'] = works.map((workText) => ({
-            text: workText,
-          }));
-        }
-
-        if (criticism && criticism.length > 0) {
-          updateData.$set['criticism'] = criticism.map((critText) => ({
-            text: critText,
-          }));
-        }
-
-        updatedCard = await this.authorCardModel.findByIdAndUpdate(
-          id,
-          updateData,
-          {
-            new: true,
-            runValidators: true,
-            session,
-          },
-        );
-
-        if (!updatedCard) {
-          throw new Error('Failed to save author card texts');
-        }
-      } else {
-        if (criticism && criticism.length > 0) {
-          updateData.$set['criticism'] = criticism.map((critText) => ({
-            text: critText,
-          }));
-        }
-
-        switch (card.type) {
-          case 'MagazineCard':
-            updatedCard = await this.magazineCardModel.findByIdAndUpdate(
-              id,
-              updateData,
-              { new: true, runValidators: true, session },
-            );
-            break;
-          case 'GroupingCard':
-            updatedCard = await this.groupingCardModel.findByIdAndUpdate(
-              id,
-              updateData,
-              { new: true, runValidators: true, session },
-            );
-            break;
-          case 'AnthologyCard':
-            updatedCard = await this.anthologyCardModel.findByIdAndUpdate(
-              id,
-              updateData,
-              { new: true, runValidators: true, session },
-            );
-            break;
-          default:
-            throw new Error('Invalid card type');
-        }
-
-        if (!updatedCard) {
-          throw new Error('Failed to save card text');
-        }
-      }
-
       await session.commitTransaction();
       session.endSession();
 
       return updatedCard;
     } catch (error) {
+      // En caso de error, hacer rollback de la transacción
       await session.abortTransaction();
       session.endSession();
       console.error('Error saving card texts:', error);

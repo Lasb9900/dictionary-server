@@ -34,125 +34,165 @@ export class QueryRepository implements OnApplicationShutdown {
   async createAuthorCardNodes(authorData: any): Promise<void> {
     const query = this.connection.query();
 
-    console.log(authorData);
+    console.log('Data: ', authorData);
+
     await query
       .raw(
         `
     // Crear o actualizar el nodo del autor
-    MERGE (card:Author {fichaId: $id})
-    ON CREATE SET card.fullName = $fullName,  
-                  card.pseudonym = $pseudonym, 
-                  card.dateOfBirth = $dateOfBirth, 
-                  card.dateOfDeath = $dateOfDeath, 
-                  card.placeOfBirth = $placeOfBirth, 
-                  card.placeOfDeath = $placeOfDeath, 
-                  card.gender = $gender, 
-                  card.relevantActivities = $relevantActivities, 
-                  card.mainTheme = $mainTheme, 
-                  card.mainGenre = $mainGenre, 
-                  card.context = $context,
-                  card.text = $text
-    ON MATCH SET card.fullName = $fullName,
-                  card.pseudonym = $pseudonym, 
-                  card.dateOfBirth = $dateOfBirth, 
-                  card.dateOfDeath = $dateOfDeath, 
-                  card.placeOfBirth = $placeOfBirth, 
-                  card.placeOfDeath = $placeOfDeath, 
-                  card.gender = $gender, 
-                  card.relevantActivities = $relevantActivities, 
-                  card.mainTheme = $mainTheme, 
-                  card.mainGenre = $mainGenre, 
-                  card.context = $context,
-                  card.text = $text
+      MERGE (card:Author {fichaId: $id})
+      ON CREATE SET card.fullName = $fullName,  
+                    card.pseudonym = $pseudonym, 
+                    card.dateOfBirth = $dateOfBirth, 
+                    card.dateOfDeath = $dateOfDeath, 
+                    card.placeOfBirth = $placeOfBirth, 
+                    card.placeOfDeath = $placeOfDeath, 
+                    card.gender = $gender, 
+                    card.relevantActivities = $relevantActivities, 
+                    card.mainTheme = $mainTheme, 
+                    card.mainGenre = $mainGenre, 
+                    card.context = $context,
+                    card.text = $text
+      ON MATCH SET card.fullName = $fullName,
+                    card.pseudonym = $pseudonym, 
+                    card.dateOfBirth = $dateOfBirth, 
+                    card.dateOfDeath = $dateOfDeath, 
+                    card.placeOfBirth = $placeOfBirth, 
+                    card.placeOfDeath = $placeOfDeath, 
+                    card.gender = $gender, 
+                    card.relevantActivities = $relevantActivities, 
+                    card.mainTheme = $mainTheme, 
+                    card.mainGenre = $mainGenre, 
+                    card.context = $context,
+                    card.text = $text
 
-    // Crear nodos de relatives relacionados con el autor
-    WITH card, $relatives AS relativesData
-    UNWIND relativesData AS relativeData
-    MERGE (relative:Relative {name: relativeData.name, fichaId: $id})
-    ON CREATE SET relative.relationship = relativeData.relationship
-    ON MATCH SET relative.relationship = relativeData.relationship
-    MERGE (card)-[:HAS_RELATIVE]->(relative)
+      // Crear nodos de relatives relacionados con el autor
+      WITH card, $relatives AS relativesData
+      FOREACH (relativeData IN CASE WHEN size(relativesData) > 0 THEN relativesData ELSE [] END |
+        MERGE (relative:Relative {name: relativeData.name, fichaId: $id})
+        ON CREATE SET relative.relationship = relativeData.relationship
+        ON MATCH SET relative.relationship = relativeData.relationship
+        MERGE (card)-[:HAS_RELATIVE]->(relative)
+      )
 
-    // Crear nodos multimedia relacionados con el autor
-    WITH card, $multimedia AS multimediaData
-    UNWIND multimediaData AS media
-    MERGE (mediaNode:Multimedia {link: media.link, fichaId: $id})
-    ON CREATE SET mediaNode.type = media.type, 
-                  mediaNode.description = media.description,
-                  mediaNode.title = media.title
-    ON MATCH SET mediaNode.type = media.type, 
-                  mediaNode.description = media.description,
-                  mediaNode.title = media.title
-    MERGE (card)-[:HAS_MULTIMEDIA]->(mediaNode)
+      // Crear nodos multimedia relacionados con el autor si multimedia no es vacío
+      WITH card, $multimedia AS multimediaData
+      FOREACH (media IN CASE WHEN size(multimediaData) > 0 THEN multimediaData ELSE [] END | 
+          MERGE (mediaNode:Multimedia {link: media.link, fichaId: $id})
+          ON CREATE SET mediaNode.type = media.type, 
+                        mediaNode.description = media.description,
+                        mediaNode.title = media.title
+          ON MATCH SET mediaNode.type = media.type, 
+                        mediaNode.description = media.description,
+                        mediaNode.title = media.title
+          MERGE (card)-[:HAS_MULTIMEDIA]->(mediaNode)
+      )
 
-    // Crear nodos de obras y sus multimedia
-    WITH card, $works AS worksData
-    UNWIND worksData AS workData
-    MERGE (work:Work {title: workData.title, fichaId: $id})
-    ON CREATE SET work.originalLanguage = workData.originalLanguage, 
-                  work.genre = workData.genre, 
-                  work.publicationDate = workData.publicationDate, 
-                  work.description = workData.description,
-                  work.text = workData.text
-    ON MATCH SET work.originalLanguage = workData.originalLanguage, 
-                  work.genre = workData.genre, 
-                  work.publicationDate = workData.publicationDate, 
-                  work.description = workData.description,
-                  work.text = workData.text
-    MERGE (card)-[:CREATED]->(work)
+      // Crear nodos de obras
+      WITH card, $works AS worksData
+      FOREACH (workData IN CASE WHEN size(worksData) > 0 THEN worksData ELSE [] END |
+        MERGE (work:Work {title: workData.title, fichaId: $id})
+        ON CREATE SET work.originalLanguage = workData.originalLanguage, 
+                      work.genre = workData.genre, 
+                      work.publicationDate = workData.publicationDate, 
+                      work.description = workData.description,
+                      work.text = workData.text
+        ON MATCH SET work.originalLanguage = workData.originalLanguage, 
+                      work.genre = workData.genre, 
+                      work.publicationDate = workData.publicationDate, 
+                      work.description = workData.description,
+                      work.text = workData.text
+        MERGE (card)-[:CREATED]->(work)
+        
+        // Crear o actualizar el lugar de publicación de la obra
+        FOREACH (_ IN CASE WHEN workData.publicationPlace IS NOT NULL THEN [1] ELSE [] END | 
+            MERGE (place:Publication {fichaId: $id, city: workData.publicationPlace.city, printingHouse: workData.publicationPlace.printingHouse, publisher: workData.publicationPlace.publisher})
+            ON CREATE SET place.city = workData.publicationPlace.city, 
+                          place.printingHouse = workData.publicationPlace.printingHouse, 
+                          place.publisher = workData.publicationPlace.publisher
+            ON MATCH SET place.city = workData.publicationPlace.city, 
+                          place.printingHouse = workData.publicationPlace.printingHouse, 
+                          place.publisher = workData.publicationPlace.publisher
+            MERGE (work)-[:PUBLISHED_IN]->(place)
+        )
 
-    // Crear o actualizar el lugar de publicación de la obra
-    WITH card, work, workData, workData.publicationPlace AS pubPlace
-    MERGE (place:Publication {fichaId: $id, city: pubPlace.city, printingHouse: pubPlace.printingHouse, publisher: pubPlace.publisher})
-    ON CREATE SET place.city = pubPlace.city, 
-                  place.printingHouse = pubPlace.printingHouse, 
-                  place.publisher = pubPlace.publisher
-    ON MATCH SET place.city = pubPlace.city, 
-                  place.printingHouse = pubPlace.printingHouse, 
-                  place.publisher = pubPlace.publisher
-    MERGE (work)-[:PUBLISHED_IN]->(place)
+        // Crear ediciones de la obra
+        FOREACH (editionData IN CASE WHEN size(workData.editions) > 0 THEN workData.editions ELSE [] END |
+          MERGE (edition:Edition {
+              fichaId: $id,
+              editionTitle: editionData.editiontitle,
+              publicationDate: editionData.publicationDate
+          })
+          ON CREATE SET 
+              edition.language = editionData.language,
+              edition.translator = editionData.translator
+          ON MATCH SET 
+              edition.language = editionData.language,
+              edition.translator = editionData.translator
+          
+          // Crear o actualizar el lugar de publicación de la edición
+          FOREACH (_ IN CASE WHEN editionData.publicationPlace IS NOT NULL THEN [1] ELSE [] END | 
+              MERGE (editionPlace:Publication {fichaId: $id, city: editionData.publicationPlace.city, printingHouse: editionData.publicationPlace.printingHouse, publisher: editionData.publicationPlace.publisher})
+              ON CREATE SET 
+                  editionPlace.city = editionData.publicationPlace.city, 
+                  editionPlace.printingHouse = editionData.publicationPlace.printingHouse, 
+                  editionPlace.publisher = editionData.publicationPlace.publisher
+              ON MATCH SET 
+                  editionPlace.city = editionData.publicationPlace.city, 
+                  editionPlace.printingHouse = editionData.publicationPlace.printtingHouse, 
+                  editionPlace.publisher = editionData.publicationPlace.publisher
+              MERGE (edition)-[:PUBLISHED_IN]->(editionPlace)
+          )
+          
+          // Relacionar la edición con la obra
+          MERGE (work)-[:HAS_EDITION]->(edition)
+        )
+        
+        // Crear multimedia de la obra
+        FOREACH (workMedia IN CASE WHEN workData.multimedia IS NOT NULL AND size(workData.multimedia) > 0 THEN workData.multimedia ELSE [] END | 
+            MERGE (workMediaNode:Multimedia {link: workMedia.link, fichaId: $id})
+            ON CREATE SET workMediaNode.type = workMedia.type, 
+                          workMediaNode.description = workMedia.description,
+                          workMediaNode.title = workMedia.title
+            ON MATCH SET workMediaNode.type = workMedia.type, 
+                          workMediaNode.description = workMedia.description,
+                          workMediaNode.title = workMedia.title
+            MERGE (work)-[:HAS_MULTIMEDIA]->(workMediaNode)
+        )
+      )
 
-    // Crear multimedia de las obras
-    WITH card, work, workData.multimedia AS workMultimedia
-    UNWIND workMultimedia AS workMedia
-    MERGE (workMediaNode:Multimedia {link: workMedia.link, fichaId: $id})
-    ON CREATE SET workMediaNode.type = workMedia.type, 
-                  workMediaNode.description = workMedia.description
-    ON MATCH SET workMediaNode.type = workMedia.type, 
-                  workMediaNode.description = workMedia.description
-    MERGE (work)-[:HAS_MULTIMEDIA]->(workMediaNode)
-
-    // Crear nodos de críticas y sus multimedia
-    WITH card, $criticism AS criticismData
-    UNWIND criticismData AS crit
-    MERGE (criticism:Criticism {title: crit.title, fichaId: $id})
-    ON CREATE SET criticism.type = crit.type, 
-                  criticism.author = crit.author, 
-                  criticism.publicationDate = crit.publicationDate, 
-                  criticism.link = crit.link, 
-                  criticism.bibliographicReference = crit.bibliographicReference, 
-                  criticism.description = crit.description,
-                  criticism.text = crit.text
-    ON MATCH SET criticism.type = crit.type, 
-                  criticism.author = crit.author, 
-                  criticism.publicationDate = crit.publicationDate, 
-                  criticism.link = crit.link, 
-                  criticism.bibliographicReference = crit.bibliographicReference, 
-                  criticism.description = crit.description,
-                  criticism.text = crit.text
-    MERGE (criticism)-[:CRITICIZES_ABOUT]->(card)
-
-    // Crear multimedia de las críticas
-    WITH card, criticism, crit
-    UNWIND crit.multimedia AS critMedia
-    MERGE (critMediaNode:Multimedia {link: critMedia.link, fichaId: $id})
-    ON CREATE SET critMediaNode.type = critMedia.type, 
-                  critMediaNode.description = critMedia.description,
-                  critMediaNode.title = critMedia.title
-    ON MATCH SET critMediaNode.type = critMedia.type, 
-                  critMediaNode.description = critMedia.description,
-                  critMediaNode.title = critMedia.title
-    MERGE (criticism)-[:HAS_MULTIMEDIA]->(critMediaNode)
+      // Crear críticas
+      WITH card, $criticism AS criticismData
+      FOREACH (crit IN CASE WHEN size(criticismData) > 0 THEN criticismData ELSE [] END |
+        MERGE (criticism:Criticism {title: crit.title, fichaId: $id})
+        ON CREATE SET criticism.type = crit.type, 
+                      criticism.author = crit.author, 
+                      criticism.publicationDate = crit.publicationDate, 
+                      criticism.link = crit.link, 
+                      criticism.bibliographicReference = crit.bibliographicReference, 
+                      criticism.description = crit.description,
+                      criticism.text = crit.text
+        ON MATCH SET criticism.type = crit.type, 
+                      criticism.author = crit.author, 
+                      criticism.publicationDate = crit.publicationDate, 
+                      criticism.link = crit.link, 
+                      criticism.bibliographicReference = crit.bibliographicReference, 
+                      criticism.description = crit.description,
+                      criticism.text = crit.text
+        MERGE (criticism)-[:CRITICIZES_ABOUT]->(card)
+        
+        // Crear multimedia de las críticas
+        FOREACH (critMedia IN CASE WHEN crit.multimedia IS NOT NULL AND size(crit.multimedia) > 0 THEN crit.multimedia ELSE [] END |
+          MERGE (critMediaNode:Multimedia {link: critMedia.link, fichaId: $id})
+          ON CREATE SET critMediaNode.type = critMedia.type, 
+                        critMediaNode.description = critMedia.description,
+                        critMediaNode.title = critMedia.title
+          ON MATCH SET critMediaNode.type = critMedia.type, 
+                        critMediaNode.description = critMedia.description,
+                        critMediaNode.title = critMedia.title
+          MERGE (criticism)-[:HAS_MULTIMEDIA]->(critMediaNode)
+        )
+      )
       `,
         authorData,
       )
@@ -256,65 +296,89 @@ export class QueryRepository implements OnApplicationShutdown {
         `
         // Crear o actualizar el nodo de la antología
         MERGE (anthology:Anthology {fichaId: $id})
-        ON CREATE SET anthology.title = $anthologyTitle, 
-                      anthology.genre = $genre, 
-                      anthology.author = $author, 
-                      anthology.originalLanguage = $originalLanguage, 
-                      anthology.publicationDate = $publicationDate, 
-                      anthology.description = $description,
-                      anthology.text = $text
-        ON MATCH SET anthology.title = $anthologyTitle, 
-                      anthology.genre = $genre, 
-                      anthology.author = $author, 
-                      anthology.originalLanguage = $originalLanguage, 
-                      anthology.publicationDate = $publicationDate, 
-                      anthology.description = $description,
-                      anthology.text = $text
+        ON CREATE SET 
+            anthology.title = $anthologyTitle, 
+            anthology.genre = $genre, 
+            anthology.author = $author, 
+            anthology.originalLanguage = $originalLanguage, 
+            anthology.publicationDate = $publicationDate, 
+            anthology.description = $description,
+            anthology.text = $text
+        ON MATCH SET 
+            anthology.title = $anthologyTitle, 
+            anthology.genre = $genre, 
+            anthology.author = $author, 
+            anthology.originalLanguage = $originalLanguage, 
+            anthology.publicationDate = $publicationDate, 
+            anthology.description = $description,
+            anthology.text = $text
 
-        // Crear o actualizar el lugar de publicación
+        // Crear o actualizar el lugar de publicación de la antología
         WITH anthology, $publicationPlace AS pubPlace
-        MERGE (place:Publication {fichaId: $id})
-        ON CREATE SET place.city = pubPlace.city, 
-                      place.printingHouse = pubPlace.printingHouse, 
-                      place.publisher = pubPlace.publisher
-        ON MATCH SET place.city = pubPlace.city, 
-                      place.printingHouse = pubPlace.printingHouse, 
-                      place.publisher = pubPlace.publisher
-        MERGE (anthology)-[:PUBLISHED_IN]->(place)
+        FOREACH (_ IN CASE WHEN pubPlace IS NOT NULL THEN [1] ELSE [] END | 
+            MERGE (place:Publication {fichaId: $id, city: pubPlace.city, printingHouse: pubPlace.printingHouse, publisher: pubPlace.publisher})
+            ON CREATE SET 
+                place.city = pubPlace.city, 
+                place.printingHouse = pubPlace.printingHouse, 
+                place.publisher = pubPlace.publisher
+            ON MATCH SET 
+                place.city = pubPlace.city, 
+                place.printingHouse = pubPlace.printingHouse, 
+                place.publisher = pubPlace.publisher
+            MERGE (anthology)-[:PUBLISHED_IN]->(place)
+        )
 
-        // Crear o actualizar multimedia de la antología
+        // Crear o actualizar multimedia de la antología si multimedia no es vacío
         WITH anthology, $multimedia AS multimediaData
-        UNWIND multimediaData AS media
-        MERGE (mediaNode:Multimedia {link: media.link, fichaId: $id})
-        ON CREATE SET mediaNode.type = media.type, mediaNode.description = media.description, mediaNode.title = media.title
-        ON MATCH SET mediaNode.type = media.type, mediaNode.description = media.description, mediaNode.title = media.title
-        MERGE (anthology)-[:HAS_MULTIMEDIA]->(mediaNode)
+        FOREACH (media IN CASE WHEN size(multimediaData) > 0 THEN multimediaData ELSE [] END | 
+            MERGE (mediaNode:Multimedia {link: media.link, fichaId: $id})
+            ON CREATE SET 
+                mediaNode.type = media.type, 
+                mediaNode.description = media.description, 
+                mediaNode.title = media.title
+            ON MATCH SET 
+                mediaNode.type = media.type, 
+                mediaNode.description = media.description, 
+                mediaNode.title = media.title
+            MERGE (anthology)-[:HAS_MULTIMEDIA]->(mediaNode)
+        )
 
         // Crear o actualizar críticas de la antología
         WITH anthology, $criticism AS criticismData
-        UNWIND criticismData AS crit
-        MERGE (criticism:Criticism {title: crit.title, fichaId: $id})
-        ON CREATE SET criticism.type = crit.type, criticism.author = crit.author, 
-                      criticism.publicationDate = crit.publicationDate, 
-                      criticism.link = crit.link, 
-                      criticism.bibliographicReference = crit.bibliographicReference, 
-                      criticism.description = crit.description,
-                      criticism.text = crit.text
-        ON MATCH SET criticism.type = crit.type, criticism.author = crit.author, 
-                      criticism.publicationDate = crit.publicationDate, 
-                      criticism.link = crit.link, 
-                      criticism.bibliographicReference = crit.bibliographicReference, 
-                      criticism.description = crit.description,
-                      criticism.text = crit.text
-        MERGE (criticism)-[:CRITICIZES_ABOUT]->(anthology)
-
-        // Crear o actualizar multimedia de las críticas
-        WITH anthology, criticism, crit
-        UNWIND crit.multimedia AS critMedia
-        MERGE (critMediaNode:Multimedia {link: critMedia.link, fichaId: $id})
-        ON CREATE SET critMediaNode.type = critMedia.type, critMediaNode.description = critMedia.description, critMediaNode.title = critMedia.title
-        ON MATCH SET critMediaNode.type = critMedia.type, critMediaNode.description = critMedia.description, critMediaNode.title = critMedia.title
-        MERGE (criticism)-[:HAS_MULTIMEDIA]->(critMediaNode)
+        FOREACH (crit IN CASE WHEN size(criticismData) > 0 THEN criticismData ELSE [] END |
+            MERGE (criticism:Criticism {title: crit.title, fichaId: $id})
+            ON CREATE SET 
+                criticism.type = crit.type, 
+                criticism.author = crit.author, 
+                criticism.publicationDate = crit.publicationDate, 
+                criticism.link = crit.link, 
+                criticism.bibliographicReference = crit.bibliographicReference, 
+                criticism.description = crit.description,
+                criticism.text = crit.text
+            ON MATCH SET 
+                criticism.type = crit.type, 
+                criticism.author = crit.author, 
+                criticism.publicationDate = crit.publicationDate, 
+                criticism.link = crit.link, 
+                criticism.bibliographicReference = crit.bibliographicReference, 
+                criticism.description = crit.description,
+                criticism.text = crit.text
+            MERGE (criticism)-[:CRITICIZES_ABOUT]->(anthology)
+            
+            // Crear o actualizar multimedia de las críticas si multimedia no es vacío
+            FOREACH (critMedia IN CASE WHEN crit.multimedia IS NOT NULL AND size(crit.multimedia) > 0 THEN crit.multimedia ELSE [] END |
+                MERGE (critMediaNode:Multimedia {link: critMedia.link, fichaId: $id})
+                ON CREATE SET 
+                    critMediaNode.type = critMedia.type, 
+                    critMediaNode.description = critMedia.description,
+                    critMediaNode.title = critMedia.title
+                ON MATCH SET 
+                    critMediaNode.type = critMedia.type, 
+                    critMediaNode.description = critMedia.description,
+                    critMediaNode.title = critMedia.title
+                MERGE (criticism)-[:HAS_MULTIMEDIA]->(critMediaNode)
+            )
+        )
         `,
         anthologyData,
       )

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 
-const model = 'gpt-3.5-turbo';
+const model = 'gpt-3.5';
 const temperature = 0;
 
 @Injectable()
