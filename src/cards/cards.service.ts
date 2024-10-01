@@ -675,28 +675,43 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createMagazineCardNodes({
-        magazineTitle: updatedCard.magazineTitle
-          ? updatedCard.magazineTitle
-          : '',
-        originalLanguage: updatedCard.originalLanguage
-          ? updatedCard.originalLanguage
-          : '',
-        firstIssueDate: updatedCard.firstIssueDate
-          ? updatedCard.firstIssueDate
-          : '',
-        lastIssueDate: updatedCard.lastIssueDate
-          ? updatedCard.lastIssueDate
-          : '',
-        issuesPublished: updatedCard.issuesPublished
-          ? updatedCard.issuesPublished
-          : '',
-        sections: updatedCard.sections ? updatedCard.sections : '',
-        description: updatedCard.description ? updatedCard.description : '',
-        link: updatedCard.link ? updatedCard.link : '',
-        bibliographicReference: updatedCard.bibliographicReference
-          ? updatedCard.bibliographicReference
-          : '',
-        text: updatedCard.text ? updatedCard.text : '',
+        magazineTitle:
+          updatedCard.magazineTitle && updatedCard.magazineTitle !== ''
+            ? updatedCard.magazineTitle
+            : null,
+        originalLanguage:
+          updatedCard.originalLanguage && updatedCard.originalLanguage !== ''
+            ? updatedCard.originalLanguage
+            : null,
+        firstIssueDate:
+          updatedCard.firstIssueDate && updatedCard.firstIssueDate !== ''
+            ? updatedCard.firstIssueDate
+            : null,
+        lastIssueDate:
+          updatedCard.lastIssueDate && updatedCard.lastIssueDate !== ''
+            ? updatedCard.lastIssueDate
+            : null,
+        issuesPublished:
+          updatedCard.issuesPublished && updatedCard.issuesPublished !== ''
+            ? updatedCard.issuesPublished
+            : null,
+        sections:
+          updatedCard.sections && updatedCard.sections !== ''
+            ? updatedCard.sections
+            : null,
+        description:
+          updatedCard.description && updatedCard.description !== ''
+            ? updatedCard.description
+            : null,
+        link:
+          updatedCard.link && updatedCard.link !== '' ? updatedCard.link : null,
+        bibliographicReference:
+          updatedCard.bibliographicReference &&
+          updatedCard.bibliographicReference !== ''
+            ? updatedCard.bibliographicReference
+            : null,
+        text:
+          updatedCard.text && updatedCard.text !== '' ? updatedCard.text : null,
         multimedia: updatedCard.multimedia ? updatedCard.multimedia : [],
         creators: updatedCard.creators ? updatedCard.creators : [],
         criticism: updatedCard.criticism ? updatedCard.criticism : [],
@@ -739,24 +754,37 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createAnthologyCardNodes({
-        anthologyTitle: updatedCard.anthologyTitle
-          ? updatedCard.anthologyTitle
-          : '',
-        genre: updatedCard.genre ? updatedCard.genre : '',
-        author: updatedCard.author ? updatedCard.author : '',
-        originalLanguage: updatedCard.originalLanguage
-          ? updatedCard.originalLanguage
-          : '',
-        publicationDate: updatedCard.publicationDate
-          ? updatedCard.publicationDate
-          : '',
+        anthologyTitle:
+          updatedCard.anthologyTitle && updatedCard.anthologyTitle !== ''
+            ? updatedCard.anthologyTitle
+            : null,
+        genre:
+          updatedCard.genre && updatedCard.genre !== ''
+            ? updatedCard.genre
+            : null,
+        author:
+          updatedCard.author && updatedCard.author !== ''
+            ? updatedCard.author
+            : null,
+        originalLanguage:
+          updatedCard.originalLanguage && updatedCard.originalLanguage !== ''
+            ? updatedCard.originalLanguage
+            : null,
+        publicationDate:
+          updatedCard.publicationDate && updatedCard.publicationDate !== ''
+            ? updatedCard.publicationDate
+            : null,
         publicationPlace: updatedCard.publicationPlace
           ? updatedCard.publicationPlace
-          : '',
-        description: updatedCard.description ? updatedCard.description : '',
-        text: updatedCard.text ? updatedCard.text : '',
-        multimedia: updatedCard.multimedia ? updatedCard.multimedia : '',
-        criticism: updatedCard.criticism ? updatedCard.criticism : '',
+          : null,
+        description:
+          updatedCard.description && updatedCard.description !== ''
+            ? updatedCard.description
+            : null,
+        text:
+          updatedCard.text && updatedCard.text !== '' ? updatedCard.text : null,
+        multimedia: updatedCard.multimedia ? updatedCard.multimedia : [],
+        criticism: updatedCard.criticism ? updatedCard.criticism : [],
         id,
       });
 
@@ -796,25 +824,36 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createGroupingCardNodes({
-        name: updatedCard.name ? updatedCard.name : '',
+        name:
+          updatedCard.name && updatedCard.name !== '' ? updatedCard.name : null,
         meetingPlace: updatedCard.meetingPlace
           ? updatedCard.meetingPlace
           : null,
-        startDate: updatedCard.startDate ? updatedCard.startDate : '',
-        endDate: updatedCard.endDate ? updatedCard.endDate : '',
-        generalCharacteristics: updatedCard.generalCharacteristics
-          ? updatedCard.generalCharacteristics
-          : '',
+        startDate:
+          updatedCard.startDate && updatedCard.startDate !== ''
+            ? updatedCard.startDate
+            : null,
+        endDate:
+          updatedCard.endDate && updatedCard.endDate !== ''
+            ? updatedCard.endDate
+            : null,
+        generalCharacteristics:
+          updatedCard.generalCharacteristics &&
+          updatedCard.generalCharacteristics !== ''
+            ? updatedCard.generalCharacteristics
+            : null,
         members: updatedCard.members ? updatedCard.members : [],
         groupPublications: updatedCard.groupPublications
           ? updatedCard.groupPublications
           : [],
-        groupActivities: updatedCard.groupActivities
-          ? updatedCard.groupActivities
-          : '',
+        groupActivities:
+          updatedCard.groupActivities && updatedCard.groupActivities !== ''
+            ? updatedCard.groupActivities
+            : null,
         multimedia: updatedCard.multimedia ? updatedCard.multimedia : [],
         criticism: updatedCard.criticism ? updatedCard.criticism : [],
-        text: updatedCard.text ? updatedCard.text : '',
+        text:
+          updatedCard.text && updatedCard.text !== '' ? updatedCard.text : null,
         id,
       });
 
