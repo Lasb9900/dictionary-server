@@ -762,21 +762,23 @@ export class CardsService {
 
       await this.queryRepository.createGroupingCardNodes({
         name: updatedCard.name ? updatedCard.name : '',
-        meetingPlace: updatedCard.meetingPlace ? updatedCard.meetingPlace : '',
+        meetingPlace: updatedCard.meetingPlace
+          ? updatedCard.meetingPlace
+          : null,
         startDate: updatedCard.startDate ? updatedCard.startDate : '',
         endDate: updatedCard.endDate ? updatedCard.endDate : '',
         generalCharacteristics: updatedCard.generalCharacteristics
           ? updatedCard.generalCharacteristics
           : '',
-        members: updatedCard.members ? updatedCard.members : '',
+        members: updatedCard.members ? updatedCard.members : [],
         groupPublications: updatedCard.groupPublications
           ? updatedCard.groupPublications
-          : '',
+          : [],
         groupActivities: updatedCard.groupActivities
           ? updatedCard.groupActivities
           : '',
-        multimedia: updatedCard.multimedia ? updatedCard.multimedia : '',
-        criticism: updatedCard.criticism ? updatedCard.criticism : '',
+        multimedia: updatedCard.multimedia ? updatedCard.multimedia : [],
+        criticism: updatedCard.criticism ? updatedCard.criticism : [],
         text: updatedCard.text ? updatedCard.text : '',
         id,
       });

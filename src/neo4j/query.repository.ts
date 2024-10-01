@@ -421,13 +421,13 @@ export class QueryRepository implements OnApplicationShutdown {
         // Crear o actualizar el lugar de reuniones del grupo
         WITH group, $meetingPlace AS meetingPlaceData
         FOREACH (_ IN CASE WHEN meetingPlaceData IS NOT NULL THEN [1] ELSE [] END | 
-            MERGE (place:MeetingPlace {fichaId: $id, city: meetingPlaceData.city, municipality: meetingPlaceData.municipality})
+            MERGE (place:MeetingPlace {fichaId: $id})
             ON CREATE SET 
-                place.city = meetingPlaceData.city, 
-                place.municipality = meetingPlaceData.municipality
+                place.city = COALESCE(meetingPlaceData.city, "Desconocido"),
+                place.municipality = COALESCE(meetingPlaceData.municipality, "Desconocido")
             ON MATCH SET 
-                place.city = meetingPlaceData.city, 
-                place.municipality = meetingPlaceData.municipality
+                place.city = COALESCE(meetingPlaceData.city, "Desconocido"),
+                place.municipality = COALESCE(meetingPlaceData.municipality, "Desconocido")
             MERGE (group)-[:MET_IN]->(place)
         )
 
@@ -459,8 +459,6 @@ export class QueryRepository implements OnApplicationShutdown {
                 publication.authors = pub.authors, 
                 publication.summary = pub.summary
             MERGE (group)-[:PUBLISHED]->(publication)
-            
-            // Si deseas agregar validaciones adicionales para cada publicación, puedes anidar más bloques FOREACH aquí
         )
 
         // Crear o actualizar críticas del grupo y sus multimedia
