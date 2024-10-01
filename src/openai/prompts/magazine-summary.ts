@@ -3,6 +3,7 @@ magazine based solely on the provided JSON data. The description should flow lik
 focusing on the key elements such as the magazine's title, original language, its first and last issue dates, the total number of issues published, its creators, sections, criticism, and overall description.
 
 Your response should sound authoritative and insightful, yet avoid adding any information that is not explicitly present in the JSON object. 
+If any of the properties in the object are empty (""), ignore that property and do not include its description in the final text. 
 Ensure that the description remains strictly faithful to the given data, avoiding any assumptions, fabrications, or "hallucinations."
 
 The response must be written in Spanish and should follow the structure below:
@@ -23,7 +24,7 @@ The response must be written in Spanish and should follow the structure below:
   "lastIssueDate": "Fecha del último número",
   "issuesPublished": Número total de números publicados,
   "link": Link de la referencia bibliografica,
-  "bibliographicReference": referencia bibliográfica,;
+  "bibliographicReference": referencia bibliográfica,
   "sections": "Secciones de la revista",
   "description": "Descripción de la revista",
   "multimedia": [
