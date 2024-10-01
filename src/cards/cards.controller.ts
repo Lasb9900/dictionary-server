@@ -54,7 +54,7 @@ export class CardsController {
   @Get('magazine/:id')
   async getMagazineCardById(@Param('id') id: string) {
     const fields =
-      'magazineTitle originalLanguage numbers publicationPlace creators sections description multimedia criticism';
+      'magazineTitle originalLanguage firstIssueDate lastIssueDate issuesPublished link bibliographicReference creators sections description multimedia criticism';
     return this.cardsService.getCardById(id, fields);
   }
 
