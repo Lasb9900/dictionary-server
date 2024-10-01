@@ -4,7 +4,6 @@ import { MagazineCreator } from '../interfaces/magazine-creator.interface';
 import { Multimedia } from '../interfaces/multimedia.interface';
 import { CardStatus } from '../interfaces/card-status.interface';
 import { Criticism } from '../interfaces/criticism.interface';
-import { MagazineIssue } from '../interfaces/number.interface';
 
 @Schema()
 export class MagazineCard {
@@ -23,8 +22,20 @@ export class MagazineCard {
   @Prop()
   originalLanguage: string;
 
-  @Prop({ type: [Object] })
-  numbers: MagazineIssue[];
+  @Prop()
+  firstIssueDate: string;
+
+  @Prop()
+  lastIssueDate: string;
+
+  @Prop()
+  issuesPublished: string;
+
+  @Prop()
+  link: string;
+
+  @Prop()
+  bibliographicReference: string;
 
   @Prop()
   creators: MagazineCreator[];

@@ -338,17 +338,9 @@ export class CardsService {
         JSON.stringify({
           magazineTitle: updateCardDto.magazineTitle,
           originalLanguage: updateCardDto.originalLanguage,
-          numbers: updateCardDto.numbers.map((issue) => ({
-            number: issue.number,
-            issueDate: issue.issueDate,
-            publicationPlace: {
-              city: issue.publicationPlace?.city,
-              printingHouse: issue.publicationPlace?.printingHouse,
-              publisher: issue.publicationPlace?.publisher,
-            },
-            language: issue.language,
-            translator: issue.translator,
-          })),
+          firstIssueDate: updateCardDto.firstIssueDate,
+          lastIssueDate: updateCardDto.lastIssueDate,
+          issuesPublished: updateCardDto.issuesPublished,
           creators: updateCardDto.creators.map((creator) => ({
             role: creator.role,
             name: creator.name,
@@ -370,7 +362,6 @@ export class CardsService {
               link: criticism.link,
               bibliographicReference: criticism.bibliographicReference,
               description: criticism.description,
-              text: criticism.text,
             }),
           );
           return criticismText;
@@ -598,16 +589,16 @@ export class CardsService {
         dateOfDeath: updatedCard.dateOfDeath ? updatedCard.dateOfDeath : '',
         placeOfBirth: updatedCard.placeOfBirth ? updatedCard.placeOfBirth : '',
         placeOfDeath: updatedCard.placeOfDeath ? updatedCard.placeOfDeath : '',
-        relatives: updatedCard.relatives ? updatedCard.relatives : null,
+        relatives: updatedCard.relatives ? updatedCard.relatives : [],
         relevantActivities: updatedCard.relevantActivities
           ? updatedCard.relevantActivities
           : '',
         mainTheme: updatedCard.mainTheme ? updatedCard.mainTheme : '',
         mainGenre: updatedCard.mainGenre ? updatedCard.mainGenre : '',
         context: updatedCard.context ? updatedCard.context : '',
-        multimedia: updatedCard.multimedia ? updatedCard.multimedia : null,
-        works: updatedCard.works ? updatedCard.works : null,
-        criticism: updatedCard.criticism ? updatedCard.criticism : null,
+        multimedia: updatedCard.multimedia ? updatedCard.multimedia : [],
+        works: updatedCard.works ? updatedCard.works : [],
+        criticism: updatedCard.criticism ? updatedCard.criticism : [],
         gender: updatedCard.gender ? updatedCard.gender : '',
         text: updatedCard.text ? updatedCard.text : '',
         id,
@@ -655,13 +646,25 @@ export class CardsService {
         originalLanguage: updatedCard.originalLanguage
           ? updatedCard.originalLanguage
           : '',
+        firstIssueDate: updatedCard.firstIssueDate
+          ? updatedCard.firstIssueDate
+          : '',
+        lastIssueDate: updatedCard.lastIssueDate
+          ? updatedCard.lastIssueDate
+          : '',
+        issuesPublished: updatedCard.issuesPublished
+          ? updatedCard.issuesPublished
+          : '',
         sections: updatedCard.sections ? updatedCard.sections : '',
         description: updatedCard.description ? updatedCard.description : '',
+        link: updatedCard.link ? updatedCard.link : '',
+        bibliographicReference: updatedCard.bibliographicReference
+          ? updatedCard.bibliographicReference
+          : '',
         text: updatedCard.text ? updatedCard.text : '',
-        numbers: updatedCard.numbers ? updatedCard.numbers : '',
-        multimedia: updatedCard.multimedia ? updatedCard.multimedia : '',
-        creators: updatedCard.creators ? updatedCard.creators : '',
-        criticism: updatedCard.criticism ? updatedCard.criticism : '',
+        multimedia: updatedCard.multimedia ? updatedCard.multimedia : [],
+        creators: updatedCard.creators ? updatedCard.creators : [],
+        criticism: updatedCard.criticism ? updatedCard.criticism : [],
         id,
       });
 
@@ -1045,6 +1048,40 @@ export class CardsService {
       return updatedCard;
     } catch (error) {
       // En caso de error, hacer rollback de la transacción
+      await session.abortTransaction();
+      session.endSession();
+      console.error('Error saving card texts:', error);
+      throw new Error(`Transaction failed: ${error.message}`);
+    }
+  }
+
+  async saveAnthologyCardTexts(
+    id: string,
+    text: string,
+    criticism: string[],
+  ): Promise<Card> {
+    const session = await this.authorCardModel.db.startSession();
+    session.startTransaction();
+
+    try {
+      const updatedCard = await this.anthologyCardModel.findByIdAndUpdate(
+        id,
+        { text, criticism },
+        {
+          new: true,
+          runValidators: true,
+          session,
+        },
+      );
+
+      if (!updatedCard) {
+        throw new Error('Card not found');
+      }
+      await session.commitTransaction();
+      session.endSession();
+
+      return updatedCard;
+    } catch (error) {
       await session.abortTransaction();
       session.endSession();
       console.error('Error saving card texts:', error);

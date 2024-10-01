@@ -243,4 +243,16 @@ export class CardsController {
       body.criticism,
     );
   }
+
+  @Post('/save-texts/anthology/:id')
+  async saveAnthologyCardTexts(
+    @Param('id') id: string,
+    @Body() body,
+  ): Promise<Card> {
+    return this.cardsService.saveAnthologyCardTexts(
+      id,
+      body.text,
+      body.criticism,
+    );
+  }
 }
