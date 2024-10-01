@@ -40,159 +40,151 @@ export class QueryRepository implements OnApplicationShutdown {
       .raw(
         `
     // Crear o actualizar el nodo del autor
-      MERGE (card:Author {fichaId: $id})
-      ON CREATE SET card.fullName = $fullName,  
-                    card.pseudonym = $pseudonym, 
-                    card.dateOfBirth = $dateOfBirth, 
-                    card.dateOfDeath = $dateOfDeath, 
-                    card.placeOfBirth = $placeOfBirth, 
-                    card.placeOfDeath = $placeOfDeath, 
-                    card.gender = $gender, 
-                    card.relevantActivities = $relevantActivities, 
-                    card.mainTheme = $mainTheme, 
-                    card.mainGenre = $mainGenre, 
-                    card.context = $context,
-                    card.text = $text
-      ON MATCH SET card.fullName = $fullName,
-                    card.pseudonym = $pseudonym, 
-                    card.dateOfBirth = $dateOfBirth, 
-                    card.dateOfDeath = $dateOfDeath, 
-                    card.placeOfBirth = $placeOfBirth, 
-                    card.placeOfDeath = $placeOfDeath, 
-                    card.gender = $gender, 
-                    card.relevantActivities = $relevantActivities, 
-                    card.mainTheme = $mainTheme, 
-                    card.mainGenre = $mainGenre, 
-                    card.context = $context,
-                    card.text = $text
+        MERGE (card:Author {fichaId: $id})
+        ON CREATE SET card.fullName = COALESCE($fullName, 'No hay información'),  
+                    card.pseudonym = COALESCE($pseudonym, 'No hay información'), 
+                    card.dateOfBirth = COALESCE($dateOfBirth, 'No hay información'), 
+                    card.dateOfDeath = COALESCE($dateOfDeath, 'No hay información'), 
+                    card.placeOfBirth = COALESCE($placeOfBirth, 'No hay información'), 
+                    card.placeOfDeath = COALESCE($placeOfDeath, 'No hay información'), 
+                    card.gender = COALESCE($gender, 'No hay información'), 
+                    card.relevantActivities = COALESCE($relevantActivities, 'No hay información'), 
+                    card.mainTheme = COALESCE($mainTheme, 'No hay información'), 
+                    card.mainGenre = COALESCE($mainGenre, 'No hay información'), 
+                    card.context = COALESCE($context, 'No hay información'),
+                    card.text = COALESCE($text, 'No hay información')
+        ON MATCH SET card.fullName = COALESCE($fullName, 'No hay información'),
+                    card.pseudonym = COALESCE($pseudonym, 'No hay información'), 
+                    card.dateOfBirth = COALESCE($dateOfBirth, 'No hay información'), 
+                    card.dateOfDeath = COALESCE($dateOfDeath, 'No hay información'), 
+                    card.placeOfBirth = COALESCE($placeOfBirth, 'No hay información'), 
+                    card.placeOfDeath = COALESCE($placeOfDeath, 'No hay información'), 
+                    card.gender = COALESCE($gender, 'No hay información'), 
+                    card.relevantActivities = COALESCE($relevantActivities, 'No hay información'), 
+                    card.mainTheme = COALESCE($mainTheme, 'No hay información'), 
+                    card.mainGenre = COALESCE($mainGenre, 'No hay información'), 
+                    card.context = COALESCE($context, 'No hay información'),
+                    card.text = COALESCE($text, 'No hay información')
 
-      // Crear nodos de relatives relacionados con el autor
-      WITH card, $relatives AS relativesData
-      FOREACH (relativeData IN CASE WHEN size(relativesData) > 0 THEN relativesData ELSE [] END |
+        // Crear nodos de relatives relacionados con el autor
+        WITH card, $relatives AS relativesData
+        FOREACH (relativeData IN CASE WHEN size(relativesData) > 0 THEN relativesData ELSE [] END |
         MERGE (relative:Relative {name: relativeData.name, fichaId: $id})
-        ON CREATE SET relative.relationship = relativeData.relationship
-        ON MATCH SET relative.relationship = relativeData.relationship
+        ON CREATE SET relative.relationship = COALESCE(relativeData.relationship, 'No hay información')
+        ON MATCH SET relative.relationship = COALESCE(relativeData.relationship, 'No hay información')
         MERGE (card)-[:HAS_RELATIVE]->(relative)
-      )
+        )
 
-      // Crear nodos multimedia relacionados con el autor si multimedia no es vacío
-      WITH card, $multimedia AS multimediaData
-      FOREACH (media IN CASE WHEN size(multimediaData) > 0 THEN multimediaData ELSE [] END | 
-          MERGE (mediaNode:Multimedia {link: media.link, fichaId: $id})
-          ON CREATE SET mediaNode.type = media.type, 
-                        mediaNode.description = media.description,
-                        mediaNode.title = media.title
-          ON MATCH SET mediaNode.type = media.type, 
-                        mediaNode.description = media.description,
-                        mediaNode.title = media.title
-          MERGE (card)-[:HAS_MULTIMEDIA]->(mediaNode)
-      )
+        // Crear nodos multimedia relacionados con el autor si multimedia no es vacío
+        WITH card, $multimedia AS multimediaData
+        FOREACH (media IN CASE WHEN size(multimediaData) > 0 THEN multimediaData ELSE [] END | 
+        MERGE (mediaNode:Multimedia {link: media.link, fichaId: $id})
+        ON CREATE SET mediaNode.type = COALESCE(media.type, 'No hay información'), 
+                        mediaNode.description = COALESCE(media.description, 'No hay información'),
+                        mediaNode.title = COALESCE(media.title, 'No hay información')
+        ON MATCH SET mediaNode.type = COALESCE(media.type, 'No hay información'), 
+                        mediaNode.description = COALESCE(media.description, 'No hay información'),
+                        mediaNode.title = COALESCE(media.title, 'No hay información')
+        MERGE (card)-[:HAS_MULTIMEDIA]->(mediaNode)
+        )
 
-      // Crear nodos de obras
-      WITH card, $works AS worksData
-      FOREACH (workData IN CASE WHEN size(worksData) > 0 THEN worksData ELSE [] END |
+        // Crear nodos de obras
+        WITH card, $works AS worksData
+        FOREACH (workData IN CASE WHEN size(worksData) > 0 THEN worksData ELSE [] END |
         MERGE (work:Work {title: workData.title, fichaId: $id})
-        ON CREATE SET work.originalLanguage = workData.originalLanguage, 
-                      work.genre = workData.genre, 
-                      work.publicationDate = workData.publicationDate, 
-                      work.description = workData.description,
-                      work.text = workData.text
-        ON MATCH SET work.originalLanguage = workData.originalLanguage, 
-                      work.genre = workData.genre, 
-                      work.publicationDate = workData.publicationDate, 
-                      work.description = workData.description,
-                      work.text = workData.text
+        ON CREATE SET work.originalLanguage = COALESCE(workData.originalLanguage, 'No hay información'), 
+                        work.genre = COALESCE(workData.genre, 'No hay información'), 
+                        work.publicationDate = COALESCE(workData.publicationDate, 'No hay información'), 
+                        work.description = COALESCE(workData.description, 'No hay información'),
+                        work.text = COALESCE(workData.text, 'No hay información')
+        ON MATCH SET work.originalLanguage = COALESCE(workData.originalLanguage, 'No hay información'), 
+                        work.genre = COALESCE(workData.genre, 'No hay información'), 
+                        work.publicationDate = COALESCE(workData.publicationDate, 'No hay información'), 
+                        work.description = COALESCE(workData.description, 'No hay información'),
+                        work.text = COALESCE(workData.text, 'No hay información')
         MERGE (card)-[:CREATED]->(work)
-        
+
         // Crear o actualizar el lugar de publicación de la obra
         FOREACH (_ IN CASE WHEN workData.publicationPlace IS NOT NULL THEN [1] ELSE [] END | 
             MERGE (place:Publication {fichaId: $id, city: workData.publicationPlace.city, printingHouse: workData.publicationPlace.printingHouse, publisher: workData.publicationPlace.publisher})
-            ON CREATE SET place.city = workData.publicationPlace.city, 
-                          place.printingHouse = workData.publicationPlace.printingHouse, 
-                          place.publisher = workData.publicationPlace.publisher
-            ON MATCH SET place.city = workData.publicationPlace.city, 
-                          place.printingHouse = workData.publicationPlace.printingHouse, 
-                          place.publisher = workData.publicationPlace.publisher
+            ON CREATE SET place.city = COALESCE(workData.publicationPlace.city, 'No hay información'), 
+                        place.printingHouse = COALESCE(workData.publicationPlace.printingHouse, 'No hay información'), 
+                        place.publisher = COALESCE(workData.publicationPlace.publisher, 'No hay información')
+            ON MATCH SET place.city = COALESCE(workData.publicationPlace.city, 'No hay información'), 
+                        place.printingHouse = COALESCE(workData.publicationPlace.printingHouse, 'No hay información'), 
+                        place.publisher = COALESCE(workData.publicationPlace.publisher, 'No hay información')
             MERGE (work)-[:PUBLISHED_IN]->(place)
         )
 
         // Crear ediciones de la obra
         FOREACH (editionData IN CASE WHEN size(workData.editions) > 0 THEN workData.editions ELSE [] END |
-          MERGE (edition:Edition {
-              fichaId: $id,
-              editionTitle: editionData.editiontitle,
-              publicationDate: editionData.publicationDate
-          })
-          ON CREATE SET 
-              edition.language = editionData.language,
-              edition.translator = editionData.translator
-          ON MATCH SET 
-              edition.language = editionData.language,
-              edition.translator = editionData.translator
-          
-          // Crear o actualizar el lugar de publicación de la edición
-          FOREACH (_ IN CASE WHEN editionData.publicationPlace IS NOT NULL THEN [1] ELSE [] END | 
-              MERGE (editionPlace:Publication {fichaId: $id, city: editionData.publicationPlace.city, printingHouse: editionData.publicationPlace.printingHouse, publisher: editionData.publicationPlace.publisher})
-              ON CREATE SET 
-                  editionPlace.city = editionData.publicationPlace.city, 
-                  editionPlace.printingHouse = editionData.publicationPlace.printingHouse, 
-                  editionPlace.publisher = editionData.publicationPlace.publisher
-              ON MATCH SET 
-                  editionPlace.city = editionData.publicationPlace.city, 
-                  editionPlace.printingHouse = editionData.publicationPlace.printtingHouse, 
-                  editionPlace.publisher = editionData.publicationPlace.publisher
-              MERGE (edition)-[:PUBLISHED_IN]->(editionPlace)
-          )
-          
-          // Relacionar la edición con la obra
-          MERGE (work)-[:HAS_EDITION]->(edition)
+            MERGE (edition:Edition {fichaId: $id, editionTitle: editionData.editionTitle, publicationDate: editionData.publicationDate})
+            ON CREATE SET edition.language = COALESCE(editionData.language, 'No hay información'), 
+                        edition.translator = COALESCE(editionData.translator, 'No hay información')
+            ON MATCH SET edition.language = COALESCE(editionData.language, 'No hay información'), 
+                        edition.translator = COALESCE(editionData.translator, 'No hay información')
+
+            // Crear o actualizar el lugar de publicación de la edición
+            FOREACH (_ IN CASE WHEN editionData.publicationPlace IS NOT NULL THEN [1] ELSE [] END | 
+            MERGE (editionPlace:Publication {fichaId: $id, city: editionData.publicationPlace.city, printingHouse: editionData.publicationPlace.printingHouse, publisher: editionData.publicationPlace.publisher})
+            ON CREATE SET editionPlace.city = COALESCE(editionData.publicationPlace.city, 'No hay información'), 
+                            editionPlace.printingHouse = COALESCE(editionData.publicationPlace.printingHouse, 'No hay información'), 
+                            editionPlace.publisher = COALESCE(editionData.publicationPlace.publisher, 'No hay información')
+            ON MATCH SET editionPlace.city = COALESCE(editionData.publicationPlace.city, 'No hay información'), 
+                            editionPlace.printingHouse = COALESCE(editionData.publicationPlace.printingHouse, 'No hay información'), 
+                            editionPlace.publisher = COALESCE(editionData.publicationPlace.publisher, 'No hay información')
+            MERGE (edition)-[:PUBLISHED_IN]->(editionPlace)
+            )
+
+            // Relacionar la edición con la obra
+            MERGE (work)-[:HAS_EDITION]->(edition)
         )
-        
+
         // Crear multimedia de la obra
         FOREACH (workMedia IN CASE WHEN workData.multimedia IS NOT NULL AND size(workData.multimedia) > 0 THEN workData.multimedia ELSE [] END | 
             MERGE (workMediaNode:Multimedia {link: workMedia.link, fichaId: $id})
-            ON CREATE SET workMediaNode.type = workMedia.type, 
-                          workMediaNode.description = workMedia.description,
-                          workMediaNode.title = workMedia.title
-            ON MATCH SET workMediaNode.type = workMedia.type, 
-                          workMediaNode.description = workMedia.description,
-                          workMediaNode.title = workMedia.title
+            ON CREATE SET workMediaNode.type = COALESCE(workMedia.type, 'No hay información'), 
+                        workMediaNode.description = COALESCE(workMedia.description, 'No hay información'),
+                        workMediaNode.title = COALESCE(workMedia.title, 'No hay información')
+            ON MATCH SET workMediaNode.type = COALESCE(workMedia.type, 'No hay información'), 
+                        workMediaNode.description = COALESCE(workMedia.description, 'No hay información'),
+                        workMediaNode.title = COALESCE(workMedia.title, 'No hay información')
             MERGE (work)-[:HAS_MULTIMEDIA]->(workMediaNode)
         )
-      )
+        )
 
-      // Crear críticas
-      WITH card, $criticism AS criticismData
-      FOREACH (crit IN CASE WHEN size(criticismData) > 0 THEN criticismData ELSE [] END |
+        // Crear críticas
+        WITH card, $criticism AS criticismData
+        FOREACH (crit IN CASE WHEN size(criticismData) > 0 THEN criticismData ELSE [] END |
         MERGE (criticism:Criticism {title: crit.title, fichaId: $id})
-        ON CREATE SET criticism.type = crit.type, 
-                      criticism.author = crit.author, 
-                      criticism.publicationDate = crit.publicationDate, 
-                      criticism.link = crit.link, 
-                      criticism.bibliographicReference = crit.bibliographicReference, 
-                      criticism.description = crit.description,
-                      criticism.text = crit.text
-        ON MATCH SET criticism.type = crit.type, 
-                      criticism.author = crit.author, 
-                      criticism.publicationDate = crit.publicationDate, 
-                      criticism.link = crit.link, 
-                      criticism.bibliographicReference = crit.bibliographicReference, 
-                      criticism.description = crit.description,
-                      criticism.text = crit.text
+        ON CREATE SET criticism.type = COALESCE(crit.type, 'No hay información'), 
+                        criticism.author = COALESCE(crit.author, 'No hay información'), 
+                        criticism.publicationDate = COALESCE(crit.publicationDate, 'No hay información'), 
+                        criticism.link = COALESCE(crit.link, 'No hay información'), 
+                        criticism.bibliographicReference = COALESCE(crit.bibliographicReference, 'No hay información'), 
+                        criticism.description = COALESCE(crit.description, 'No hay información'),
+                        criticism.text = COALESCE(crit.text, 'No hay información')
+        ON MATCH SET criticism.type = COALESCE(crit.type, 'No hay información'), 
+                        criticism.author = COALESCE(crit.author, 'No hay información'), 
+                        criticism.publicationDate = COALESCE(crit.publicationDate, 'No hay información'), 
+                        criticism.link = COALESCE(crit.link, 'No hay información'), 
+                        criticism.bibliographicReference = COALESCE(crit.bibliographicReference, 'No hay información'), 
+                        criticism.description = COALESCE(crit.description, 'No hay información'),
+                        criticism.text = COALESCE(crit.text, 'No hay información')
         MERGE (criticism)-[:CRITICIZES_ABOUT]->(card)
-        
+
         // Crear multimedia de las críticas
         FOREACH (critMedia IN CASE WHEN crit.multimedia IS NOT NULL AND size(crit.multimedia) > 0 THEN crit.multimedia ELSE [] END |
-          MERGE (critMediaNode:Multimedia {link: critMedia.link, fichaId: $id})
-          ON CREATE SET critMediaNode.type = critMedia.type, 
-                        critMediaNode.description = critMedia.description,
-                        critMediaNode.title = critMedia.title
-          ON MATCH SET critMediaNode.type = critMedia.type, 
-                        critMediaNode.description = critMedia.description,
-                        critMediaNode.title = critMedia.title
-          MERGE (criticism)-[:HAS_MULTIMEDIA]->(critMediaNode)
+            MERGE (critMediaNode:Multimedia {link: critMedia.link, fichaId: $id})
+            ON CREATE SET critMediaNode.type = COALESCE(critMedia.type, 'No hay información'), 
+                        critMediaNode.description = COALESCE(critMedia.description, 'No hay información'),
+                        critMediaNode.title = COALESCE(critMedia.title, 'No hay información')
+            ON MATCH SET critMediaNode.type = COALESCE(critMedia.type, 'No hay información'), 
+                        critMediaNode.description = COALESCE(critMedia.description, 'No hay información'),
+                        critMediaNode.title = COALESCE(critMedia.title, 'No hay información')
+            MERGE (criticism)-[:HAS_MULTIMEDIA]->(critMediaNode)
         )
-      )
+        )
       `,
         authorData,
       )

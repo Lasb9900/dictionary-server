@@ -37,6 +37,7 @@ export class AnthologyCard {
       printingHouse: { type: String },
       publisher: { type: String },
     },
+    _id: false,
   })
   publicationPlace?: Publication;
 

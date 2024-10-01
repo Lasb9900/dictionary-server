@@ -25,6 +25,7 @@ export class GroupingCard {
       city: { type: String },
       municipality: { type: String },
     },
+    _id: false,
   })
   meetingPlace?: MeetingPlace;
 

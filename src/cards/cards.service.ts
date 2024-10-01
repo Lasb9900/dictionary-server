@@ -21,6 +21,7 @@ import { criticismSummary } from '../openai/prompts/criticism-summary';
 import { magazineSummaryPrompt } from 'src/openai/prompts/magazine-summary';
 import { anthologySummaryPrompt } from 'src/openai/prompts/anthology-summary';
 import { groupingSummaryPrompt } from 'src/openai/prompts/grouping-summary';
+import { Gender } from './interfaces/gender.interface';
 
 @Injectable()
 export class CardsService {
@@ -583,24 +584,58 @@ export class CardsService {
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createAuthorCardNodes({
-        fullName: updatedCard.fullName ? updatedCard.fullName : '',
-        pseudonym: updatedCard.pseudonym ? updatedCard.pseudonym : '',
-        dateOfBirth: updatedCard.dateOfBirth ? updatedCard.dateOfBirth : '',
-        dateOfDeath: updatedCard.dateOfDeath ? updatedCard.dateOfDeath : '',
-        placeOfBirth: updatedCard.placeOfBirth ? updatedCard.placeOfBirth : '',
-        placeOfDeath: updatedCard.placeOfDeath ? updatedCard.placeOfDeath : '',
+        fullName:
+          updatedCard.fullName && updatedCard.fullName !== ''
+            ? updatedCard.fullName
+            : null,
+        pseudonym:
+          updatedCard.pseudonym && updatedCard.pseudonym !== ''
+            ? updatedCard.pseudonym
+            : null,
+        dateOfBirth:
+          updatedCard.dateOfBirth && updatedCard.dateOfBirth !== ''
+            ? updatedCard.dateOfBirth
+            : null,
+        dateOfDeath:
+          updatedCard.dateOfDeath && updatedCard.dateOfDeath !== ''
+            ? updatedCard.dateOfDeath
+            : null,
+        placeOfBirth:
+          updatedCard.placeOfBirth && updatedCard.placeOfBirth !== ''
+            ? updatedCard.placeOfBirth
+            : null,
+        placeOfDeath:
+          updatedCard.placeOfDeath && updatedCard.placeOfDeath !== ''
+            ? updatedCard.placeOfDeath
+            : null,
         relatives: updatedCard.relatives ? updatedCard.relatives : [],
-        relevantActivities: updatedCard.relevantActivities
-          ? updatedCard.relevantActivities
-          : '',
-        mainTheme: updatedCard.mainTheme ? updatedCard.mainTheme : '',
-        mainGenre: updatedCard.mainGenre ? updatedCard.mainGenre : '',
-        context: updatedCard.context ? updatedCard.context : '',
+        relevantActivities:
+          updatedCard.relevantActivities &&
+          updatedCard.relevantActivities !== ''
+            ? updatedCard.relevantActivities
+            : null,
+        mainTheme:
+          updatedCard.mainTheme && updatedCard.mainTheme !== ''
+            ? updatedCard.mainTheme
+            : null,
+        mainGenre:
+          updatedCard.mainGenre && updatedCard.mainGenre !== ''
+            ? updatedCard.mainGenre
+            : null,
+        context:
+          updatedCard.context && updatedCard.context !== ''
+            ? updatedCard.context
+            : null,
         multimedia: updatedCard.multimedia ? updatedCard.multimedia : [],
         works: updatedCard.works ? updatedCard.works : [],
         criticism: updatedCard.criticism ? updatedCard.criticism : [],
-        gender: updatedCard.gender ? updatedCard.gender : '',
-        text: updatedCard.text ? updatedCard.text : '',
+        gender:
+          updatedCard.gender &&
+          Object.values(Gender).includes(updatedCard.gender)
+            ? updatedCard.gender
+            : null,
+        text:
+          updatedCard.text && updatedCard.text !== '' ? updatedCard.text : null,
         id,
       });
 
