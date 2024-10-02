@@ -222,6 +222,21 @@ export class QueryRepository implements OnApplicationShutdown {
             magazine.description = COALESCE($description, 'No hay información'),
             magazine.text = COALESCE($text, 'No hay información')
 
+        // Crear o actualizar el lugar de publicación de la antología
+        WITH magazine, $publicationPlace AS pubPlace
+        FOREACH (_ IN CASE WHEN pubPlace IS NOT NULL THEN [1] ELSE [] END | 
+        MERGE (place:Publication {fichaId: $id, city: pubPlace.city})
+            ON CREATE SET 
+                place.city = COALESCE(pubPlace.city, "Desconocido"), 
+                place.publisher = COALESCE(pubPlace.publisher, "Desconocido"),
+                place.printingHouse = COALESCE(pubPlace.printingHouse, "Desconocido")
+            ON MATCH SET 
+                place.city = COALESCE(pubPlace.city, "Desconocido"), 
+                place.publisher = COALESCE(pubPlace.publisher, "Desconocido"),
+                place.printingHouse = COALESCE(pubPlace.printingHouse, "Desconocido")
+            MERGE (magazine)-[:PUBLISHED_IN]->(place)
+        )
+
         // Crear o actualizar multimedia de la revista si multimedia no es vacío
         WITH magazine, $multimedia AS multimediaData
         FOREACH (media IN CASE WHEN size(multimediaData) > 0 THEN multimediaData ELSE [] END | 
@@ -296,33 +311,42 @@ export class QueryRepository implements OnApplicationShutdown {
     await query
       .raw(
         `
-        // Crear o actualizar el nodo de la revista
-        MERGE (magazine:Magazine {fichaId: $id})
+        // Crear o actualizar el nodo de la antología
+        MERGE (anthology:Anthology {fichaId: $id})
         ON CREATE SET 
-            magazine.magazineTitle = COALESCE($magazineTitle, 'No hay información'), 
-            magazine.originalLanguage = COALESCE($originalLanguage, 'No hay información'),
-            magazine.firstIssueDate = COALESCE($firstIssueDate, 'No hay información'),
-            magazine.lastIssueDate = COALESCE($lastIssueDate, 'No hay información'),
-            magazine.issuesPublished = COALESCE($issuesPublished, 'No hay información'),
-            magazine.bibliographicReference = COALESCE($bibliographicReference, 'No hay información'),
-            magazine.link = COALESCE($link, 'No hay información'),
-            magazine.sections = COALESCE($sections, 'No hay información'),
-            magazine.description = COALESCE($description, 'No hay información'),
-            magazine.text = COALESCE($text, 'No hay información')
+            anthology.title = COALESCE($anthologyTitle, 'No hay información'), 
+            anthology.genre = COALESCE($genre, 'No hay información'), 
+            anthology.author = COALESCE($author, 'No hay información'), 
+            anthology.originalLanguage = COALESCE($originalLanguage, 'No hay información'), 
+            anthology.publicationDate = COALESCE($publicationDate, 'No hay información'), 
+            anthology.description = COALESCE($description, 'No hay información'),
+            anthology.text = COALESCE($text, 'No hay información')
         ON MATCH SET 
-            magazine.magazineTitle = COALESCE($magazineTitle, 'No hay información'), 
-            magazine.originalLanguage = COALESCE($originalLanguage, 'No hay información'),
-            magazine.firstIssueDate = COALESCE($firstIssueDate, 'No hay información'),
-            magazine.lastIssueDate = COALESCE($lastIssueDate, 'No hay información'),
-            magazine.issuesPublished = COALESCE($issuesPublished, 'No hay información'),
-            magazine.bibliographicReference = COALESCE($bibliographicReference, 'No hay información'),
-            magazine.link = COALESCE($link, 'No hay información'), 
-            magazine.sections = COALESCE($sections, 'No hay información'), 
-            magazine.description = COALESCE($description, 'No hay información'),
-            magazine.text = COALESCE($text, 'No hay información')
+            anthology.title = COALESCE($anthologyTitle, 'No hay información'), 
+            anthology.genre = COALESCE($genre, 'No hay información'), 
+            anthology.author = COALESCE($author, 'No hay información'), 
+            anthology.originalLanguage = COALESCE($originalLanguage, 'No hay información'), 
+            anthology.publicationDate = COALESCE($publicationDate, 'No hay información'), 
+            anthology.description = COALESCE($description, 'No hay información'),
+            anthology.text = COALESCE($text, 'No hay información')
 
-        // Crear o actualizar multimedia de la revista si multimedia no es vacío
-        WITH magazine, $multimedia AS multimediaData
+        // Crear o actualizar el lugar de publicación de la antología
+        WITH anthology, $publicationPlace AS pubPlace
+        FOREACH (_ IN CASE WHEN pubPlace IS NOT NULL THEN [1] ELSE [] END | 
+        MERGE (place:Publication {fichaId: $id, city: pubPlace.city})
+            ON CREATE SET 
+                place.city = COALESCE(pubPlace.city, "Desconocido"), 
+                place.publisher = COALESCE(pubPlace.publisher, "Desconocido"),
+                place.printingHouse = COALESCE(pubPlace.printingHouse, "Desconocido")
+            ON MATCH SET 
+                place.city = COALESCE(pubPlace.city, "Desconocido"), 
+                place.publisher = COALESCE(pubPlace.publisher, "Desconocido"),
+                place.printingHouse = COALESCE(pubPlace.printingHouse, "Desconocido")
+            MERGE (anthology)-[:PUBLISHED_IN]->(place)
+        )
+
+        // Crear o actualizar multimedia de la antología si multimedia no es vacío
+        WITH anthology, $multimedia AS multimediaData
         FOREACH (media IN CASE WHEN size(multimediaData) > 0 THEN multimediaData ELSE [] END | 
             MERGE (mediaNode:Multimedia {link: media.link, fichaId: $id})
             ON CREATE SET 
@@ -333,22 +357,11 @@ export class QueryRepository implements OnApplicationShutdown {
                 mediaNode.type = COALESCE(media.type, 'No hay información'), 
                 mediaNode.description = COALESCE(media.description, 'No hay información'), 
                 mediaNode.title = COALESCE(media.title, 'No hay información')
-            MERGE (magazine)-[:HAS_MULTIMEDIA]->(mediaNode)
+            MERGE (anthology)-[:HAS_MULTIMEDIA]->(mediaNode)
         )
 
-        // Crear o actualizar creadores de la revista
-        WITH magazine, $creators AS creatorsData
-        FOREACH (creatorData IN CASE WHEN size(creatorsData) > 0 THEN creatorsData ELSE [] END |
-            MERGE (creator:Creator {name: creatorData.name, fichaId: $id})
-            ON CREATE SET 
-                creator.role = COALESCE(creatorData.role, 'No hay información')
-            ON MATCH SET 
-                creator.role = COALESCE(creatorData.role, 'No hay información')
-            MERGE (magazine)-[:HAS_CREATORS]->(creator)
-        )
-
-        // Crear o actualizar críticas de la revista
-        WITH magazine, $criticism AS criticismData
+        // Crear o actualizar críticas de la antología
+        WITH anthology, $criticism AS criticismData
         FOREACH (crit IN CASE WHEN size(criticismData) > 0 THEN criticismData ELSE [] END |
             MERGE (criticism:Criticism {title: crit.title, fichaId: $id})
             ON CREATE SET 
@@ -367,7 +380,7 @@ export class QueryRepository implements OnApplicationShutdown {
                 criticism.bibliographicReference = COALESCE(crit.bibliographicReference, 'No hay información'), 
                 criticism.description = COALESCE(crit.description, 'No hay información'),
                 criticism.text = COALESCE(crit.text, 'No hay información')
-            MERGE (criticism)-[:CRITICIZES_ABOUT]->(magazine)
+            MERGE (criticism)-[:CRITICIZES_ABOUT]->(anthology)
             
             // Crear o actualizar multimedia de las críticas si multimedia no es vacío
             FOREACH (critMedia IN CASE WHEN crit.multimedia IS NOT NULL AND size(crit.multimedia) > 0 THEN crit.multimedia ELSE [] END |
@@ -395,59 +408,68 @@ export class QueryRepository implements OnApplicationShutdown {
     await query
       .raw(
         `
-        // Crear o actualizar el nodo de la revista
-        MERGE (magazine:Magazine {fichaId: $id})
+        // Crear o actualizar el nodo del grupo
+        MERGE (group:Grouping {fichaId: $id})
         ON CREATE SET 
-            magazine.magazineTitle = COALESCE($magazineTitle, 'No hay información'), 
-            magazine.originalLanguage = COALESCE($originalLanguage, 'No hay información'),
-            magazine.firstIssueDate = COALESCE($firstIssueDate, 'No hay información'),
-            magazine.lastIssueDate = COALESCE($lastIssueDate, 'No hay información'),
-            magazine.issuesPublished = COALESCE($issuesPublished, 'No hay información'),
-            magazine.bibliographicReference = COALESCE($bibliographicReference, 'No hay información'),
-            magazine.link = COALESCE($link, 'No hay información'),
-            magazine.sections = COALESCE($sections, 'No hay información'),
-            magazine.description = COALESCE($description, 'No hay información'),
-            magazine.text = COALESCE($text, 'No hay información')
+            group.name = COALESCE($name, 'No hay información'), 
+            group.startDate = COALESCE($startDate, 'No hay información'), 
+            group.endDate = COALESCE($endDate, 'No hay información'), 
+            group.generalCharacteristics = COALESCE($generalCharacteristics, 'No hay información'), 
+            group.groupActivities = COALESCE($groupActivities, 'No hay información'),
+            group.text = COALESCE($text, 'No hay información')
         ON MATCH SET 
-            magazine.magazineTitle = COALESCE($magazineTitle, 'No hay información'), 
-            magazine.originalLanguage = COALESCE($originalLanguage, 'No hay información'),
-            magazine.firstIssueDate = COALESCE($firstIssueDate, 'No hay información'),
-            magazine.lastIssueDate = COALESCE($lastIssueDate, 'No hay información'),
-            magazine.issuesPublished = COALESCE($issuesPublished, 'No hay información'),
-            magazine.bibliographicReference = COALESCE($bibliographicReference, 'No hay información'),
-            magazine.link = COALESCE($link, 'No hay información'), 
-            magazine.sections = COALESCE($sections, 'No hay información'), 
-            magazine.description = COALESCE($description, 'No hay información'),
-            magazine.text = COALESCE($text, 'No hay información')
+            group.name = COALESCE($name, 'No hay información'), 
+            group.startDate = COALESCE($startDate, 'No hay información'), 
+            group.endDate = COALESCE($endDate, 'No hay información'), 
+            group.generalCharacteristics = COALESCE($generalCharacteristics, 'No hay información'), 
+            group.groupActivities = COALESCE($groupActivities, 'No hay información'),
+            group.text = COALESCE($text, 'No hay información')
 
-        // Crear o actualizar multimedia de la revista si multimedia no es vacío
-        WITH magazine, $multimedia AS multimediaData
+        // Crear o actualizar el lugar de reuniones del grupo
+        WITH group, $meetingPlace AS meetingPlaceData
+        FOREACH (_ IN CASE WHEN meetingPlaceData IS NOT NULL THEN [1] ELSE [] END | 
+            MERGE (place:MeetingPlace {fichaId: $id})
+            ON CREATE SET 
+                place.city = COALESCE(meetingPlaceData.city, "Desconocido"),
+                place.municipality = COALESCE(meetingPlaceData.municipality, "Desconocido")
+            ON MATCH SET 
+                place.city = COALESCE(meetingPlaceData.city, "Desconocido"),
+                place.municipality = COALESCE(meetingPlaceData.municipality, "Desconocido")
+            MERGE (group)-[:MET_IN]->(place)
+        )
+
+        // Crear o actualizar multimedia del grupo si multimedia no es vacío
+        WITH group, $multimedia AS multimediaData
         FOREACH (media IN CASE WHEN size(multimediaData) > 0 THEN multimediaData ELSE [] END | 
             MERGE (mediaNode:Multimedia {link: media.link, fichaId: $id})
             ON CREATE SET 
                 mediaNode.type = COALESCE(media.type, 'No hay información'), 
-                mediaNode.description = COALESCE(media.description, 'No hay información'), 
+                mediaNode.description = COALESCE(media.description, 'No hay información'),
                 mediaNode.title = COALESCE(media.title, 'No hay información')
             ON MATCH SET 
                 mediaNode.type = COALESCE(media.type, 'No hay información'), 
-                mediaNode.description = COALESCE(media.description, 'No hay información'), 
+                mediaNode.description = COALESCE(media.description, 'No hay información'),
                 mediaNode.title = COALESCE(media.title, 'No hay información')
-            MERGE (magazine)-[:HAS_MULTIMEDIA]->(mediaNode)
+            MERGE (group)-[:HAS_MULTIMEDIA]->(mediaNode)
         )
 
-        // Crear o actualizar creadores de la revista
-        WITH magazine, $creators AS creatorsData
-        FOREACH (creatorData IN CASE WHEN size(creatorsData) > 0 THEN creatorsData ELSE [] END |
-            MERGE (creator:Creator {name: creatorData.name, fichaId: $id})
+        // Crear o actualizar publicaciones del grupo y sus validaciones
+        WITH group, $groupPublications AS publicationsData
+        FOREACH (pub IN CASE WHEN size(publicationsData) > 0 THEN publicationsData ELSE [] END |
+            MERGE (publication:GroupPublication {title: pub.title, fichaId: $id})
             ON CREATE SET 
-                creator.role = COALESCE(creatorData.role, 'No hay información')
+                publication.year = COALESCE(pub.year, 'No hay información'), 
+                publication.authors = COALESCE(pub.authors, 'No hay información'), 
+                publication.summary = COALESCE(pub.summary, 'No hay información')
             ON MATCH SET 
-                creator.role = COALESCE(creatorData.role, 'No hay información')
-            MERGE (magazine)-[:HAS_CREATORS]->(creator)
+                publication.year = COALESCE(pub.year, 'No hay información'), 
+                publication.authors = COALESCE(pub.authors, 'No hay información'), 
+                publication.summary = COALESCE(pub.summary, 'No hay información')
+            MERGE (group)-[:PUBLISHED]->(publication)
         )
 
-        // Crear o actualizar críticas de la revista
-        WITH magazine, $criticism AS criticismData
+        // Crear o actualizar críticas del grupo y sus multimedia
+        WITH group, $criticism AS criticismData
         FOREACH (crit IN CASE WHEN size(criticismData) > 0 THEN criticismData ELSE [] END |
             MERGE (criticism:Criticism {title: crit.title, fichaId: $id})
             ON CREATE SET 
@@ -466,7 +488,7 @@ export class QueryRepository implements OnApplicationShutdown {
                 criticism.bibliographicReference = COALESCE(crit.bibliographicReference, 'No hay información'), 
                 criticism.description = COALESCE(crit.description, 'No hay información'),
                 criticism.text = COALESCE(crit.text, 'No hay información')
-            MERGE (criticism)-[:CRITICIZES_ABOUT]->(magazine)
+            MERGE (criticism)-[:CRITICIZES_ABOUT]->(group)
             
             // Crear o actualizar multimedia de las críticas si multimedia no es vacío
             FOREACH (critMedia IN CASE WHEN crit.multimedia IS NOT NULL AND size(crit.multimedia) > 0 THEN crit.multimedia ELSE [] END |
