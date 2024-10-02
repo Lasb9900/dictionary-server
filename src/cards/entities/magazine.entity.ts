@@ -4,6 +4,7 @@ import { MagazineCreator } from '../interfaces/magazine-creator.interface';
 import { Multimedia } from '../interfaces/multimedia.interface';
 import { CardStatus } from '../interfaces/card-status.interface';
 import { Criticism } from '../interfaces/criticism.interface';
+import { Publication } from '../interfaces/publication-place.interface';
 
 @Schema()
 export class MagazineCard {
@@ -30,6 +31,16 @@ export class MagazineCard {
 
   @Prop()
   issuesPublished: string;
+
+  @Prop({
+    type: {
+      city: { type: String },
+      printingHouse: { type: String },
+      publisher: { type: String },
+    },
+    _id: false,
+  })
+  publicationPlace: Publication;
 
   @Prop()
   link: string;

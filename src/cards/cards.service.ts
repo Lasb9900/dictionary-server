@@ -342,6 +342,11 @@ export class CardsService {
           firstIssueDate: updateCardDto.firstIssueDate,
           lastIssueDate: updateCardDto.lastIssueDate,
           issuesPublished: updateCardDto.issuesPublished,
+          publicationPlace: {
+            city: updateCardDto.publicationPlace?.city,
+            printingHouse: updateCardDto.publicationPlace?.printingHouse,
+            publisher: updateCardDto.publicationPlace?.publisher,
+          },
           creators: updateCardDto.creators.map((creator) => ({
             role: creator.role,
             name: creator.name,

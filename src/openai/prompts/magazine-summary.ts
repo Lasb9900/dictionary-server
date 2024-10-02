@@ -23,6 +23,11 @@ The response must be written in Spanish and should follow the structure below:
   "firstIssueDate": "Fecha del primer número",
   "lastIssueDate": "Fecha del último número",
   "issuesPublished": Número total de números publicados,
+  "publicationPlace": {
+    "city": "Ciudad Ejemplo",
+    "printingHouse": "Imprenta Ejemplo",
+    "publisher": "Editorial Ejemplo"
+  },
   "link": Link de la referencia bibliografica,
   "bibliographicReference": referencia bibliográfica,
   "sections": "Secciones de la revista",
