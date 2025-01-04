@@ -244,6 +244,7 @@ export class CardsService {
           const worksText = await this.openaiService.generateText(
             workSummaryPrompt,
             JSON.stringify({
+              author: updateCardDto.fullName,
               title: work.title,
               originalLanguage: work.originalLanguage,
               genre: work.genre,
@@ -642,6 +643,7 @@ export class CardsService {
         text:
           updatedCard.text && updatedCard.text !== '' ? updatedCard.text : null,
         id,
+        openAiApiKey: process.env.OPENAI_API_KEY,
       });
 
       await session.commitTransaction();

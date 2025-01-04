@@ -56,6 +56,7 @@ export class UsersService {
         token: this.getJwtToken({ id: user._id.toString() }),
       };
     } catch (error) {
+      console.log(error.code);
       this.handleExceptions(error);
     }
   }

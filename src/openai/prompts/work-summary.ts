@@ -1,7 +1,8 @@
 export const workSummaryPrompt = `I want you to write a bibliographic and editorial description of a literary work using only the 
 data provided in the following JSON object. Write as if you were a literature professor, presenting the facts in an academic yet natural manner. 
 Avoid hallucinations or inventing information that is not explicitly provided in the object. Here are the fields of the literary work:
-works: [{ 
+works: [{
+        author: string;
         text: string;
         title: string;
         originalLanguage: string;
