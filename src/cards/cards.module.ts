@@ -11,6 +11,10 @@ import {
 import { MagazineCard, MagazineCardSchema } from './entities/magazine.entity';
 import { GroupingCard, GroupingCardSchema } from './entities/grouping.entity';
 import { OpenaiModule } from 'src/openai/openai.module';
+import {
+  MythAndLegendCard,
+  MythAndLegendCardSchema,
+} from './entities/mythLegend.entity';
 
 @Module({
   controllers: [CardsController],
@@ -25,6 +29,7 @@ import { OpenaiModule } from 'src/openai/openai.module';
           { name: AnthologyCard.name, schema: AnthologyCardSchema },
           { name: MagazineCard.name, schema: MagazineCardSchema },
           { name: GroupingCard.name, schema: GroupingCardSchema },
+          { name: MythAndLegendCard.name, schema: MythAndLegendCardSchema },
         ],
       },
     ]),

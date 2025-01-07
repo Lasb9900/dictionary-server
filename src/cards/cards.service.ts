@@ -22,20 +22,33 @@ import { magazineSummaryPrompt } from 'src/openai/prompts/magazine-summary';
 import { anthologySummaryPrompt } from 'src/openai/prompts/anthology-summary';
 import { groupingSummaryPrompt } from 'src/openai/prompts/grouping-summary';
 import { Gender } from './interfaces/gender.interface';
+import { MythAndLegendCard } from './entities/mythLegend.entity';
+import { UpdateMythAndLegendCardDto } from './dto/update-mythLegend-card.dto';
+import { mythAndLegendSummaryPrompt } from 'src/openai/prompts/myth-legend-summary';
+import { MlType } from './interfaces/mlType.interface';
 
 @Injectable()
 export class CardsService {
   constructor(
     @InjectModel(Card.name) private readonly cardModel: Model<Card>,
+
     @InjectModel(AuthorCard.name)
     private readonly authorCardModel: Model<AuthorCard>,
+
     @InjectModel(AnthologyCard.name)
     private readonly anthologyCardModel: Model<AnthologyCard>,
+
     @InjectModel(MagazineCard.name)
     private readonly magazineCardModel: Model<MagazineCard>,
+
     @InjectModel(GroupingCard.name)
     private readonly groupingCardModel: Model<GroupingCard>,
+
+    @InjectModel(MythAndLegendCard.name)
+    private readonly mythAndLegendCardModel: Model<MythAndLegendCard>,
+
     private readonly queryRepository: QueryRepository,
+
     private readonly openaiService: OpenaiService,
   ) {}
 
@@ -69,6 +82,9 @@ export class CardsService {
           break;
         case 'GroupingCard':
           createdCard = new this.groupingCardModel(data);
+          break;
+        case 'MythLegendCard':
+          createdCard = new this.mythAndLegendCardModel(data);
           break;
         default:
           throw new Error('Invalid card type');
@@ -211,6 +227,34 @@ export class CardsService {
     } catch (error) {
       console.error('Error updating card:', error);
       throw new Error('Failed to update card. Please try again later.');
+    }
+  }
+
+  // Nuevo Mito Leyenda
+  async saveMythAndLegendCardContent(
+    id: string,
+    updateCardDto: UpdateMythAndLegendCardDto,
+  ): Promise<Card> {
+    try {
+      const updatedCard = await this.mythAndLegendCardModel.findByIdAndUpdate(
+        id,
+        updateCardDto,
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      if (!updatedCard) {
+        throw new Error('Card not found');
+      }
+
+      return updatedCard;
+    } catch (error) {
+      console.error('Error updating MythAndLegendCard:', error);
+      throw new Error(
+        'Failed to update MythAndLegendCard. Please try again later.',
+      );
     }
   }
 
@@ -565,6 +609,84 @@ export class CardsService {
     }
   }
 
+  // Nuevo Mitos y Leyendas
+  async updateMythAndLegendCardAndSetPendingReview(
+    id: string,
+    updateCardDto: UpdateMythAndLegendCardDto,
+  ): Promise<Card> {
+    try {
+      // Generar la descripción de Mitos y Leyendas
+      const mythLegendDescription = await this.openaiService.generateText(
+        mythAndLegendSummaryPrompt,
+        JSON.stringify({
+          mlTitle: updateCardDto.mlTitle,
+          mlType: updateCardDto.mlType,
+          creatorCommunity: updateCardDto.creatorCommunity,
+          diffusionPlace: updateCardDto.diffusionPlace,
+          originalLanguage: updateCardDto.originalLanguage,
+          fullText: updateCardDto.fullText,
+          mainTheme: updateCardDto.mainTheme,
+          description: updateCardDto.description,
+        }),
+      );
+
+      // Generar los textos de críticas
+      const criticismsSummaries = await Promise.all(
+        updateCardDto.criticism.map(async (criticism) => {
+          const criticismText = await this.openaiService.generateText(
+            criticismSummary,
+            JSON.stringify({
+              title: criticism.title,
+              type: criticism.type,
+              author: criticism.author,
+              publicationDate: criticism.publicationDate,
+              link: criticism.link,
+              bibliographicReference: criticism.bibliographicReference,
+              description: criticism.description,
+              text: criticism.text,
+            }),
+          );
+          return criticismText;
+        }),
+      );
+
+      // Asignar los textos generados a las críticas
+      updateCardDto.criticism.forEach((criticism, index) => {
+        criticism.text = criticismsSummaries[index];
+      });
+
+      // Asignar la descripción generada al texto principal
+      updateCardDto.text = mythLegendDescription;
+
+      // Actualizar la tarjeta en la base de datos y establecer el estado como PENDING_REVIEW
+      const updatedCard = await this.mythAndLegendCardModel.findByIdAndUpdate(
+        id,
+        {
+          ...updateCardDto,
+          status: CardStatus.PENDING_REVIEW,
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      if (!updatedCard) {
+        throw new Error('Card not found');
+      }
+
+      return updatedCard;
+    } catch (error) {
+      console.error(
+        'Error updating MythAndLegend card and setting status to pending review:',
+        error,
+      );
+      throw new Error(
+        'Failed to update MythAndLegend card and set status. Please try again later.',
+      );
+    }
+  }
+
   async uploadAuthorCard(id: string): Promise<AuthorCard> {
     const session = await this.authorCardModel.db.startSession();
     session.startTransaction();
@@ -875,6 +997,81 @@ export class CardsService {
     }
   }
 
+  // Nuevo Mito Leyenda
+  async uploadMythLegendCard(id: string): Promise<MythAndLegendCard> {
+    const session = await this.mythAndLegendCardModel.db.startSession();
+    session.startTransaction();
+
+    try {
+      const updatedCard = await this.mythAndLegendCardModel
+        .findByIdAndUpdate(
+          id,
+          { status: CardStatus.VALIDATED, observation: '' },
+          {
+            new: true,
+            runValidators: true,
+            session,
+          },
+        )
+        .lean()
+        .exec();
+
+      if (!updatedCard) {
+        throw new Error('Myth and Legend card not found');
+      }
+
+      await this.queryRepository.deleteCardNodes(id);
+
+      await this.queryRepository.createMythLegendCardNodes({
+        mlTitle:
+          updatedCard.mlTitle && updatedCard.mlTitle !== ''
+            ? updatedCard.mlTitle
+            : null,
+        mlType:
+          updatedCard.mlType &&
+          Object.values(MlType).includes(updatedCard.mlType)
+            ? updatedCard.mlType
+            : null,
+        creatorCommunity:
+          updatedCard.creatorCommunity && updatedCard.creatorCommunity !== ''
+            ? updatedCard.creatorCommunity
+            : null,
+        diffusionPlace:
+          updatedCard.diffusionPlace && updatedCard.diffusionPlace !== ''
+            ? updatedCard.diffusionPlace
+            : null,
+        originalLanguage:
+          updatedCard.originalLanguage && updatedCard.originalLanguage !== ''
+            ? updatedCard.originalLanguage
+            : null,
+        fullText:
+          updatedCard.fullText && updatedCard.fullText !== ''
+            ? updatedCard.fullText
+            : null,
+        mainTheme:
+          updatedCard.mainTheme && updatedCard.mainTheme !== ''
+            ? updatedCard.mainTheme
+            : null,
+        description:
+          updatedCard.description && updatedCard.description !== ''
+            ? updatedCard.description
+            : null,
+        multimedia: updatedCard.multimedia ? updatedCard.multimedia : [],
+        criticism: updatedCard.criticism ? updatedCard.criticism : [],
+        id,
+      });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return updatedCard;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw new Error(`Transaction failed: ${error.message}`);
+    }
+  }
+
   async findAllCards(): Promise<Card[]> {
     return await this.cardModel
       .find()
@@ -1092,6 +1289,20 @@ export class CardsService {
             },
             criticism: anthologyCard.criticism,
             observation: anthologyCard.observation,
+          };
+        case 'MythLegendCard': // Nuevo caso para MythLegendCard
+          const mythLegendCard = await this.mythAndLegendCardModel
+            .findById(id)
+            .select('mlTitle mlType fullText criticism observation')
+            .populate('criticism')
+            .exec();
+          return {
+            mythLegend: {
+              title: mythLegendCard.mlTitle,
+              text: mythLegendCard.fullText,
+            },
+            criticism: mythLegendCard.criticism,
+            observation: mythLegendCard.observation,
           };
         default:
           throw new Error('Invalid card type');

@@ -197,6 +197,11 @@ export class QueryRepository implements OnApplicationShutdown {
   async createMagazineCardNodes(magazineData: any): Promise<void> {
     const query = this.connection.query();
 
+    const creators = magazineData.creators
+      .map((creator) => `${creator.role}: ${creator.name}`)
+      .join(', ');
+    magazineData.creators = creators;
+
     await query
       .raw(
         `
@@ -212,6 +217,7 @@ export class QueryRepository implements OnApplicationShutdown {
             magazine.link = COALESCE($link, 'No hay información'),
             magazine.sections = COALESCE($sections, 'No hay información'),
             magazine.description = COALESCE($description, 'No hay información'),
+            magazine.creators = COALESCE($creators, 'No hay información'),
             magazine.text = COALESCE($text, 'No hay información')
         ON MATCH SET 
             magazine.magazineTitle = COALESCE($magazineTitle, 'No hay información'), 
@@ -223,9 +229,10 @@ export class QueryRepository implements OnApplicationShutdown {
             magazine.link = COALESCE($link, 'No hay información'), 
             magazine.sections = COALESCE($sections, 'No hay información'), 
             magazine.description = COALESCE($description, 'No hay información'),
+            magazine.creators = COALESCE($creators, 'No hay información'),
             magazine.text = COALESCE($text, 'No hay información')
 
-        // Crear o actualizar el lugar de publicación de la antología
+        // Crear o actualizar el lugar de publicación de la revista
         WITH magazine, $publicationPlace AS pubPlace
         FOREACH (_ IN CASE WHEN pubPlace IS NOT NULL THEN [1] ELSE [] END | 
         MERGE (place:Publication {fichaId: $id, city: pubPlace.city})
@@ -253,17 +260,6 @@ export class QueryRepository implements OnApplicationShutdown {
                 mediaNode.description = COALESCE(media.description, 'No hay información'), 
                 mediaNode.title = COALESCE(media.title, 'No hay información')
             MERGE (magazine)-[:HAS_MULTIMEDIA]->(mediaNode)
-        )
-
-        // Crear o actualizar creadores de la revista
-        WITH magazine, $creators AS creatorsData
-        FOREACH (creatorData IN CASE WHEN size(creatorsData) > 0 THEN creatorsData ELSE [] END |
-            MERGE (creator:Creator {name: creatorData.name, fichaId: $id})
-            ON CREATE SET 
-                creator.role = COALESCE(creatorData.role, 'No hay información')
-            ON MATCH SET 
-                creator.role = COALESCE(creatorData.role, 'No hay información')
-            MERGE (magazine)-[:HAS_CREATORS]->(creator)
         )
 
         // Crear o actualizar críticas de la revista
@@ -509,6 +505,90 @@ export class QueryRepository implements OnApplicationShutdown {
         )
         `,
         groupingData,
+      )
+      .run();
+  }
+
+  async createMythLegendCardNodes(mythLegendData: any): Promise<void> {
+    const query = this.connection.query();
+
+    await query
+      .raw(
+        `
+            // Crear o actualizar el nodo del mito o leyenda
+            MERGE (mythLegend:MythLegend {fichaId: $id})
+            ON CREATE SET 
+                mythLegend.title = COALESCE($mlTitle, 'No hay información'),
+                mythLegend.type = COALESCE($mlType, 'No hay información'), 
+                mythLegend.creatorCommunity = COALESCE($creatorCommunity, 'No hay información'), 
+                mythLegend.diffusionPlace = COALESCE($diffusionPlace, 'No hay información'), 
+                mythLegend.originalLanguage = COALESCE($originalLanguage, 'No hay información'), 
+                mythLegend.fullText = COALESCE($fullText, 'No hay información'), 
+                mythLegend.mainTheme = COALESCE($mainTheme, 'No hay información'), 
+                mythLegend.description = COALESCE($description, 'No hay información')
+            ON MATCH SET 
+                mythLegend.title = COALESCE($mlTitle, 'No hay información'), 
+                mythLegend.type = COALESCE($mlType, 'No hay información'),
+                mythLegend.creatorCommunity = COALESCE($creatorCommunity, 'No hay información'), 
+                mythLegend.diffusionPlace = COALESCE($diffusionPlace, 'No hay información'), 
+                mythLegend.originalLanguage = COALESCE($originalLanguage, 'No hay información'), 
+                mythLegend.fullText = COALESCE($fullText, 'No hay información'), 
+                mythLegend.mainTheme = COALESCE($mainTheme, 'No hay información'), 
+                mythLegend.description = COALESCE($description, 'No hay información')
+
+            // Crear o actualizar multimedia del mito o leyenda si multimedia no es vacío
+            WITH mythLegend, $multimedia AS multimediaData
+            FOREACH (media IN CASE WHEN size(multimediaData) > 0 THEN multimediaData ELSE [] END | 
+                MERGE (mediaNode:Multimedia {link: media.link, fichaId: $id})
+                ON CREATE SET 
+                    mediaNode.type = COALESCE(media.type, 'No hay información'), 
+                    mediaNode.description = COALESCE(media.description, 'No hay información'), 
+                    mediaNode.title = COALESCE(media.title, 'No hay información')
+                ON MATCH SET 
+                    mediaNode.type = COALESCE(media.type, 'No hay información'), 
+                    mediaNode.description = COALESCE(media.description, 'No hay información'), 
+                    mediaNode.title = COALESCE(media.title, 'No hay información')
+                MERGE (mythLegend)-[:HAS_MULTIMEDIA]->(mediaNode)
+            )
+
+            // Crear o actualizar críticas del mito o leyenda
+            WITH mythLegend, $criticism AS criticismData
+            FOREACH (crit IN CASE WHEN size(criticismData) > 0 THEN criticismData ELSE [] END |
+                MERGE (criticism:Criticism {title: crit.title, fichaId: $id})
+                ON CREATE SET 
+                    criticism.type = COALESCE(crit.type, 'No hay información'), 
+                    criticism.author = COALESCE(crit.author, 'No hay información'), 
+                    criticism.publicationDate = COALESCE(crit.publicationDate, 'No hay información'), 
+                    criticism.link = COALESCE(crit.link, 'No hay información'), 
+                    criticism.bibliographicReference = COALESCE(crit.bibliographicReference, 'No hay información'), 
+                    criticism.description = COALESCE(crit.description, 'No hay información'), 
+                    criticism.text = COALESCE(crit.text, 'No hay información')
+                ON MATCH SET 
+                    criticism.type = COALESCE(crit.type, 'No hay información'), 
+                    criticism.author = COALESCE(crit.author, 'No hay información'), 
+                    criticism.publicationDate = COALESCE(crit.publicationDate, 'No hay información'), 
+                    criticism.link = COALESCE(crit.link, 'No hay información'), 
+                    criticism.bibliographicReference = COALESCE(crit.bibliographicReference, 'No hay información'), 
+                    criticism.description = COALESCE(crit.description, 'No hay información'), 
+                    criticism.text = COALESCE(crit.text, 'No hay información')
+                MERGE (criticism)-[:CRITICIZES_ABOUT]->(mythLegend)
+                
+                // Crear o actualizar multimedia de las críticas si multimedia no es vacío
+                FOREACH (critMedia IN CASE WHEN crit.multimedia IS NOT NULL AND size(crit.multimedia) > 0 THEN crit.multimedia ELSE [] END |
+                    MERGE (critMediaNode:Multimedia {link: critMedia.link, fichaId: $id})
+                    ON CREATE SET 
+                        critMediaNode.type = COALESCE(critMedia.type, 'No hay información'), 
+                        critMediaNode.description = COALESCE(critMedia.description, 'No hay información'), 
+                        critMediaNode.title = COALESCE(critMedia.title, 'No hay información')
+                    ON MATCH SET 
+                        critMediaNode.type = COALESCE(critMedia.type, 'No hay información'), 
+                        critMediaNode.description = COALESCE(critMedia.description, 'No hay información'), 
+                        critMediaNode.title = COALESCE(critMedia.title, 'No hay información')
+                    MERGE (criticism)-[:HAS_MULTIMEDIA]->(critMediaNode)
+                )
+            )
+            `,
+        mythLegendData,
       )
       .run();
   }

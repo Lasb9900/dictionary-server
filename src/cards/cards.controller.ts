@@ -19,6 +19,8 @@ import { AuthorCard } from './entities/author.entity';
 import { MagazineCard } from './entities/magazine.entity';
 import { AnthologyCard } from './entities/anthology.entity';
 import { GroupingCard } from './entities/grouping.entity';
+import { UpdateMythAndLegendCardDto } from './dto/update-mythLegend-card.dto';
+import { MythAndLegendCard } from './entities/mythLegend.entity';
 
 @Controller('cards')
 export class CardsController {
@@ -72,6 +74,13 @@ export class CardsController {
     return this.cardsService.getCardById(id, fields);
   }
 
+  @Get('myth-legend/:id')
+  async getMythLegendCardById(@Param('id') id: string) {
+    const fields =
+      'mlTitle mlType fullText origin date context multimedia criticism observation';
+    return this.cardsService.getCardById(id, fields);
+  }
+
   @Put(':id')
   async updateCard(
     @Param('id') id: string,
@@ -110,6 +119,14 @@ export class CardsController {
     @Body() updateCardDto: UpdateGroupingCardDto,
   ): Promise<Card> {
     return this.cardsService.saveGroupingCardContent(id, updateCardDto);
+  }
+
+  @Put('save/myth-legend/:id')
+  async saveMythLegendCard(
+    @Param('id') id: string,
+    @Body() updateCardDto: UpdateMythAndLegendCardDto,
+  ): Promise<Card> {
+    return this.cardsService.saveMythAndLegendCardContent(id, updateCardDto);
   }
 
   @Put('update/author/:id')
@@ -156,6 +173,17 @@ export class CardsController {
     );
   }
 
+  @Put('update/myth-legend/:id')
+  async updateMythLegendCard(
+    @Param('id') id: string,
+    @Body() updateCardDto: UpdateMythAndLegendCardDto,
+  ): Promise<Card> {
+    return this.cardsService.updateMythAndLegendCardAndSetPendingReview(
+      id,
+      updateCardDto,
+    );
+  }
+
   @Put('upload/author/:id')
   async uploadAuthorCard(@Param('id') id: string): Promise<AuthorCard> {
     return this.cardsService.uploadAuthorCard(id);
@@ -174,6 +202,13 @@ export class CardsController {
   @Put('upload/grouping/:id')
   async uploadGroupingCard(@Param('id') id: string): Promise<GroupingCard> {
     return this.cardsService.uploadGroupingCard(id);
+  }
+
+  @Put('upload/myth-legend/:id')
+  async uploadMythLegendCard(
+    @Param('id') id: string,
+  ): Promise<MythAndLegendCard> {
+    return this.cardsService.uploadMythLegendCard(id);
   }
 
   @Get('status/pending-edit')
