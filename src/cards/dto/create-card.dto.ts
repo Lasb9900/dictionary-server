@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 
+// Importing necessary decorators from class-validator
 export class CreateCardDto {
   @IsString()
   @IsEnum(['AuthorCard', 'AnthologyCard', 'GroupingCard', 'MagazineCard'])
