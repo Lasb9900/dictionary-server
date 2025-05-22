@@ -15,7 +15,7 @@ import { UpdateAnthologyCardDto } from './dto/update-anthology-card.dto';
 import { UpdateGroupingCardDto } from './dto/update-grouping-card.dto';
 import { QueryRepository } from '../neo4j/query.repository';
 import { OpenaiService } from 'src/openai/openai.service';
-import { userSummaryPrompt } from 'src/openai/prompts/user-summary';
+import { userSummaryPrompt } from '../openai/prompts/user-summary';
 import { workSummaryPrompt } from 'src/openai/prompts/work-summary';
 import { criticismSummary } from '../openai/prompts/criticism-summary';
 import { magazineSummaryPrompt } from 'src/openai/prompts/magazine-summary';
