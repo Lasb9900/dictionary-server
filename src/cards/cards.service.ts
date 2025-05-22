@@ -14,17 +14,17 @@ import { UpdateMagazineCardDto } from './dto/update-magazine-card.dto';
 import { UpdateAnthologyCardDto } from './dto/update-anthology-card.dto';
 import { UpdateGroupingCardDto } from './dto/update-grouping-card.dto';
 import { QueryRepository } from '../neo4j/query.repository';
-import { OpenaiService } from 'src/openai/openai.service';
+import { OpenaiService } from '../openai/openai.service';
 import { userSummaryPrompt } from '../openai/prompts/user-summary';
-import { workSummaryPrompt } from 'src/openai/prompts/work-summary';
+import { workSummaryPrompt } from '../openai/prompts/work-summary';
 import { criticismSummary } from '../openai/prompts/criticism-summary';
-import { magazineSummaryPrompt } from 'src/openai/prompts/magazine-summary';
-import { anthologySummaryPrompt } from 'src/openai/prompts/anthology-summary';
-import { groupingSummaryPrompt } from 'src/openai/prompts/grouping-summary';
+import { magazineSummaryPrompt } from '../openai/prompts/magazine-summary';
+import { anthologySummaryPrompt } from '../openai/prompts/anthology-summary';
+import { groupingSummaryPrompt } from '../openai/prompts/grouping-summary';
 import { Gender } from './interfaces/gender.interface';
 import { MythAndLegendCard } from './entities/mythLegend.entity';
 import { UpdateMythAndLegendCardDto } from './dto/update-mythLegend-card.dto';
-import { mythAndLegendSummaryPrompt } from 'src/openai/prompts/myth-legend-summary';
+import { mythAndLegendSummaryPrompt } from '../openai/prompts/myth-legend-summary';
 import { MlType } from './interfaces/mlType.interface';
 
 @Injectable()
