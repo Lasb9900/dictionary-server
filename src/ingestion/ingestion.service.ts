@@ -9,6 +9,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CardsService } from '../cards/cards.service';
 import { Card } from '../cards/entities/card.entity';
+import { UpdateAnthologyCardDto } from '../cards/dto/update-anthology-card.dto';
+import { UpdateAuthorCardDto } from '../cards/dto/update-author-card.dto';
+import { UpdateGroupingCardDto } from '../cards/dto/update-grouping-card.dto';
+import { UpdateMagazineCardDto } from '../cards/dto/update-magazine-card.dto';
 import {
   IngestionCardType,
   IngestionWorksheetDto,
@@ -44,13 +48,25 @@ export class IngestionService {
 
     switch (type) {
       case IngestionCardType.AuthorCard:
-        return this.cardsService.saveAuthorCardContent(id, normalizedPayload);
+        return this.cardsService.saveAuthorCardContent(
+          id,
+          normalizedPayload as UpdateAuthorCardDto,
+        );
       case IngestionCardType.AnthologyCard:
-        return this.cardsService.saveAnthologyCardContent(id, normalizedPayload);
+        return this.cardsService.saveAnthologyCardContent(
+          id,
+          normalizedPayload as UpdateAnthologyCardDto,
+        );
       case IngestionCardType.MagazineCard:
-        return this.cardsService.saveMagazineCardContent(id, normalizedPayload);
+        return this.cardsService.saveMagazineCardContent(
+          id,
+          normalizedPayload as UpdateMagazineCardDto,
+        );
       case IngestionCardType.GroupingCard:
-        return this.cardsService.saveGroupingCardContent(id, normalizedPayload);
+        return this.cardsService.saveGroupingCardContent(
+          id,
+          normalizedPayload as UpdateGroupingCardDto,
+        );
       default:
         throw new BadRequestException('Unsupported card type');
     }
@@ -76,22 +92,22 @@ export class IngestionService {
       case IngestionCardType.AuthorCard:
         return this.cardsService.updateAuthorCardAndSetPendingReview(
           id,
-          updatePayload,
+          updatePayload as UpdateAuthorCardDto,
         );
       case IngestionCardType.AnthologyCard:
         return this.cardsService.updateAnthologyCardAndSetPendingReview(
           id,
-          updatePayload,
+          updatePayload as UpdateAnthologyCardDto,
         );
       case IngestionCardType.MagazineCard:
         return this.cardsService.updateMagazineCardAndSetPendingReview(
           id,
-          updatePayload,
+          updatePayload as UpdateMagazineCardDto,
         );
       case IngestionCardType.GroupingCard:
         return this.cardsService.updateGroupingCardAndSetPendingReview(
           id,
-          updatePayload,
+          updatePayload as UpdateGroupingCardDto,
         );
       default:
         throw new BadRequestException('Unsupported card type');

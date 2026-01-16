@@ -8,6 +8,7 @@ import { JoiValidationSchema } from './config/joi.validation';
 import { Neo4jModule } from './neo4j/neo4j.module';
 import { OpenaiModule } from './openai/openai.module';
 import { IngestionModule } from './ingestion/ingestion.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { IngestionModule } from './ingestion/ingestion.module';
     Neo4jModule.forRootAsync(),
     OpenaiModule,
     IngestionModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

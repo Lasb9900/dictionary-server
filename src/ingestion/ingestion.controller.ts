@@ -5,6 +5,8 @@ import {
   ParseEnumPipe,
   Post,
   Query,
+  UseFilters,
+  UseInterceptors,
 } from '@nestjs/common';
 import { IngestionService } from './ingestion.service';
 import {
@@ -12,8 +14,12 @@ import {
   IngestionWorksheetDto,
 } from './dto/ingestion-worksheet.dto';
 import { IngestionAutoDto } from './dto/ingestion-auto.dto';
+import { IngestionResponseInterceptor } from './ingestion-response.interceptor';
+import { IngestionExceptionFilter } from './ingestion-exception.filter';
 
 @Controller('ingestion')
+@UseInterceptors(IngestionResponseInterceptor)
+@UseFilters(IngestionExceptionFilter)
 export class IngestionController {
   constructor(private readonly ingestionService: IngestionService) {}
 
