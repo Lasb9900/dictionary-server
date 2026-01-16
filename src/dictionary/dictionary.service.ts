@@ -26,7 +26,7 @@ export class DictionaryService {
     const type: DictionaryEnvelopeType = this.resolveType(query);
 
     if (type === 'model') {
-      const output = await this.aiService.generateText(
+      const result = await this.aiService.generateText(
         'Describe el modelo y proveedor en uso para este entorno.',
         { providerOverride },
       );
@@ -34,19 +34,19 @@ export class DictionaryService {
       return {
         type,
         query,
-        result: output,
+        result: result.output,
       };
     }
 
-    const answer = await this.aiService.generateText(
-      'Responde en español con un resumen conciso y factual.',
-      { providerOverride, input: query },
-    );
+    const prompt = `Responde en español con un resumen conciso y factual.\n\n${query}`;
+    const answer = await this.aiService.generateText(prompt, {
+      providerOverride,
+    });
 
     const payload = {
       dictionaryId,
       provider: providerUsed,
-      answer,
+      answer: answer.output,
       multimedia: {
         images: [],
         videos: [],

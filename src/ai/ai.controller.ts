@@ -29,18 +29,14 @@ export class AiController {
     @Headers(AI_PROVIDER_HEADER) providerHeader?: string,
   ) {
     const providerOverride = normalizeAiProvider(providerHeader ?? dto.provider);
-    const providerUsed = this.aiService.resolveProviderName(providerOverride);
-
-    const start = Date.now();
-    const output = await this.aiService.generateText(dto.prompt, {
+    const result = await this.aiService.generateText(dto.prompt, {
       providerOverride,
     });
-    const latencyMs = Date.now() - start;
 
     return {
-      providerUsed,
-      output,
-      latencyMs,
+      providerUsed: result.providerUsed,
+      output: result.output,
+      latencyMs: result.latencyMs,
     };
   }
 }

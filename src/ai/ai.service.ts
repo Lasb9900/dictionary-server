@@ -18,7 +18,6 @@ export interface AiGenerateOptions {
   providerOverride?: AiProviderName;
   temperature?: number;
   model?: string;
-  input?: string;
 }
 
 @Injectable()
@@ -56,29 +55,46 @@ export class AiService {
   async generateText(
     prompt: string,
     options: AiGenerateOptions = {},
-  ): Promise<string> {
+  ): Promise<{
+    output: string;
+    providerUsed: AiProviderName;
+    latencyMs: number;
+  }> {
+    const providerName = this.resolveProviderName(options.providerOverride);
+    const start = Date.now();
+
     if (this.configService.get('aiTestMode')) {
-      const providerName = this.resolveProviderName(options.providerOverride);
-      return `[ai-test:${providerName}] ${prompt}`;
+      const output = `[ai-test:${providerName}] ${prompt}`;
+      return {
+        output,
+        providerUsed: providerName,
+        latencyMs: Date.now() - start,
+      };
     }
 
-    const providerName = this.resolveProviderName(options.providerOverride);
     const provider = this.providerMap.get(providerName);
 
     if (!provider) {
       throw new BadRequestException(`Unsupported AI provider: ${providerName}`);
     }
 
-    await this.ensureProviderAvailable(providerName, Boolean(options.providerOverride));
+    await this.ensureProviderAvailable(
+      providerName,
+      Boolean(options.providerOverride),
+    );
 
     const input: AiGenerateInput = {
       prompt,
-      input: options.input,
       model: options.model,
       temperature: options.temperature,
     };
 
-    return provider.generateText(input);
+    const output = await provider.generateText(input);
+    return {
+      output,
+      providerUsed: providerName,
+      latencyMs: Date.now() - start,
+    };
   }
 
   async getHealth() {
@@ -115,6 +131,10 @@ export class AiService {
       return;
     }
 
+    if (!isOverride) {
+      return;
+    }
+
     const baseUrl = this.configService.get<string>('ollamaBaseUrl');
     if (!baseUrl) {
       throw new ServiceUnavailableException(
@@ -122,13 +142,11 @@ export class AiService {
       );
     }
 
-    if (isOverride) {
-      const reachable = await this.ollamaProvider.isReachable();
-      if (!reachable) {
-        throw new BadGatewayException(
-          'Ollama is not reachable at OLLAMA_BASE_URL.',
-        );
-      }
+    const reachable = await this.ollamaProvider.isReachable();
+    if (!reachable) {
+      throw new BadGatewayException(
+        'Ollama is not reachable at OLLAMA_BASE_URL.',
+      );
     }
   }
 }

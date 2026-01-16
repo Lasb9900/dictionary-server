@@ -154,7 +154,7 @@ export class IngestionService {
   async autoOrchestrate(
     type: IngestionCardType,
     cardId: string | undefined,
-    payload: Record<string, any>,
+    payload: Record<string, any> = {},
     options: {
       autoReview?: boolean;
       autoUpload?: boolean;

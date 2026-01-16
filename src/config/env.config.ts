@@ -1,8 +1,5 @@
 export const EnvConfiguration = () => ({
-  mongodbUri:
-    process.env.MONGODB_URI ??
-    process.env.MONGO_URI ??
-    process.env.DATABASE_URL,
+  mongodbUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
   port: +process.env.PORT || 8080,
   aiProvider: process.env.AI_PROVIDER ?? 'ollama',

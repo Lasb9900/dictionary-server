@@ -23,8 +23,9 @@ export class IngestionAutoDto {
   @Type(() => IngestionAutoOptionsDto)
   options?: IngestionAutoOptionsDto;
 
+  @IsOptional()
   @IsObject()
-  payload: Record<string, unknown>;
+  payload?: Record<string, unknown>;
 
   @IsOptional()
   @ValidateNested()
