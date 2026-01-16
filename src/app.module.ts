@@ -6,8 +6,9 @@ import { ConfigModule } from '@nestjs/config';
 import { EnvConfiguration } from './config/env.config';
 import { JoiValidationSchema } from './config/joi.validation';
 import { Neo4jModule } from './neo4j/neo4j.module';
-import { OpenaiModule } from './openai/openai.module';
+import { AiModule } from './ai/ai.module';
 import { IngestionModule } from './ingestion/ingestion.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -19,8 +20,9 @@ import { IngestionModule } from './ingestion/ingestion.module';
     CardsModule,
     UsersModule,
     Neo4jModule.forRootAsync(),
-    OpenaiModule,
+    AiModule,
     IngestionModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
