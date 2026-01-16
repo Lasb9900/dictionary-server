@@ -69,7 +69,7 @@ export class IngestionController {
     return this.ingestionService.autoOrchestrate(
       type,
       id,
-      dto.payload,
+      dto.payload ?? {},
       {
         ...dto.options,
         providerOverride,
@@ -90,7 +90,7 @@ export class IngestionController {
     return this.ingestionService.autoOrchestrate(
       type,
       id,
-      dto.payload,
+      dto.payload ?? {},
       {
         ...dto.options,
         providerOverride,
