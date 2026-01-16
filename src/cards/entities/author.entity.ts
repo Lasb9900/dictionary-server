@@ -22,6 +22,9 @@ export class AuthorCard {
   fullName: string;
 
   @Prop()
+  shortBio?: string;
+
+  @Prop()
   gender: Gender;
 
   @Prop()
@@ -65,6 +68,19 @@ export class AuthorCard {
 
   @Prop()
   text: string;
+
+  @Prop({
+    type: {
+      provider: String,
+      text: String,
+      createdAt: Date,
+    },
+  })
+  autoReview?: {
+    provider: string;
+    text: string;
+    createdAt: Date;
+  };
 }
 
 export const AuthorCardSchema = SchemaFactory.createForClass(AuthorCard);
