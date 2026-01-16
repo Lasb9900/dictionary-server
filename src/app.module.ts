@@ -9,20 +9,32 @@ import { Neo4jModule } from './neo4j/neo4j.module';
 import { AiModule } from './ai/ai.module';
 import { IngestionModule } from './ingestion/ingestion.module';
 import { HealthModule } from './health/health.module';
+import { DictionaryModule } from './dictionary/dictionary.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      load: [EnvConfiguration],
-      validationSchema: JoiValidationSchema,
-    }),
-    MongooseModule.forRoot(process.env.MONGODB_URI),
-    CardsModule,
-    UsersModule,
-    Neo4jModule.forRootAsync(),
-    AiModule,
-    IngestionModule,
-    HealthModule,
-  ],
+  imports: (() => {
+    const imports = [
+      ConfigModule.forRoot({
+        load: [EnvConfiguration],
+        validationSchema: JoiValidationSchema,
+      }),
+      MongooseModule.forRoot(process.env.MONGODB_URI),
+      CardsModule,
+      UsersModule,
+      AiModule,
+      IngestionModule,
+      DictionaryModule,
+    ];
+
+    if (process.env.NEO4J_ENABLED === 'true') {
+      imports.push(Neo4jModule.forRootAsync());
+    }
+
+    if (process.env.HEALTH_ENABLED === 'true') {
+      imports.push(HealthModule);
+    }
+
+    return imports;
+  })(),
 })
 export class AppModule {}

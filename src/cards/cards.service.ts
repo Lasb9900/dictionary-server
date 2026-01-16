@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotImplementedException,
+  Optional,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AuthorCard } from './entities/author.entity';
@@ -47,10 +52,16 @@ export class CardsService {
     @InjectModel(MythAndLegendCard.name)
     private readonly mythAndLegendCardModel: Model<MythAndLegendCard>,
 
-    private readonly queryRepository: QueryRepository,
+    @Optional() private readonly queryRepository?: QueryRepository,
 
     private readonly aiService: AiService,
   ) {}
+
+  private ensureNeo4jEnabled() {
+    if (!this.queryRepository) {
+      throw new NotImplementedException('Neo4j disabled');
+    }
+  }
 
   private buildPrompt(prompt: string, input: string) {
     return `${prompt}\n${input}`;
@@ -129,6 +140,7 @@ export class CardsService {
     if (!card) {
       throw new BadRequestException('Ficha no encontrada.');
     }
+    this.ensureNeo4jEnabled();
     await this.queryRepository.deleteCardNodes(cardId);
     return { message: 'Ficha eliminada correctamente.' };
   }
@@ -735,6 +747,7 @@ export class CardsService {
         throw new Error('Card not found');
       }
 
+      this.ensureNeo4jEnabled();
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createAuthorCardNodes({
@@ -827,6 +840,7 @@ export class CardsService {
         throw new Error('Magazine card not found');
       }
 
+      this.ensureNeo4jEnabled();
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createMagazineCardNodes({
@@ -906,6 +920,7 @@ export class CardsService {
         throw new Error('Anthology card not found');
       }
 
+      this.ensureNeo4jEnabled();
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createAnthologyCardNodes({
@@ -976,6 +991,7 @@ export class CardsService {
         throw new Error('Grouping card not found');
       }
 
+      this.ensureNeo4jEnabled();
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createGroupingCardNodes({
@@ -1046,6 +1062,7 @@ export class CardsService {
         throw new Error('Myth and Legend card not found');
       }
 
+      this.ensureNeo4jEnabled();
       await this.queryRepository.deleteCardNodes(id);
 
       await this.queryRepository.createMythLegendCardNodes({

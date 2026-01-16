@@ -14,6 +14,7 @@ import {
   IngestionWorksheetDto,
 } from './dto/ingestion-worksheet.dto';
 import { IngestionAutoDto } from './dto/ingestion-auto.dto';
+import { IngestionAutoFillDto } from './dto/ingestion-auto-fill.dto';
 import { IngestionResponseInterceptor } from './ingestion-response.interceptor';
 import { IngestionExceptionFilter } from './ingestion-exception.filter';
 
@@ -45,6 +46,16 @@ export class IngestionController {
     @Param('id') id: string,
   ) {
     return this.ingestionService.autoReview(type, id);
+  }
+
+  @Post(':type/:id/auto-fill')
+  async autoFill(
+    @Param('type', new ParseEnumPipe(IngestionCardType))
+    type: IngestionCardType,
+    @Param('id') id: string,
+    @Body() dto: IngestionAutoFillDto,
+  ) {
+    return this.ingestionService.autoFill(type, id, dto);
   }
 
   @Post(':type/:id/auto-upload')
