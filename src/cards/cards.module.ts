@@ -35,5 +35,6 @@ import {
     ]),
     OpenaiModule,
   ],
+  exports: [CardsService, MongooseModule],
 })
 export class CardsModule {}

@@ -32,3 +32,72 @@ yarn start:dev
 ## Stack usado
 * MongoDB
 * Nest
+
+## Ingestion API (auto-registro y auto-flujo)
+
+### Crear worksheet
+```bash
+curl -X POST http://localhost:8080/api/ingestion/worksheet \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "AuthorCard",
+    "title": "Gabriela Mistral",
+    "createdBy": "507f1f77bcf86cd799439011",
+    "assignedEditors": ["507f1f77bcf86cd799439012"],
+    "assignedReviewers": ["507f1f77bcf86cd799439013"]
+  }'
+```
+
+### Guardar payload (form values) por tipo
+```bash
+curl -X POST http://localhost:8080/api/ingestion/AuthorCard/<cardId>/save \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fullName": "Gabriela Mistral",
+    "works": [
+      {
+        "title": "Desolación",
+        "publicationPlace": { "city": "Santiago", "printing": "Imprenta X" }
+      }
+    ]
+  }'
+```
+
+### Auto-review
+```bash
+curl -X POST http://localhost:8080/api/ingestion/AuthorCard/<cardId>/auto-review
+```
+
+### Auto-upload
+```bash
+curl -X POST http://localhost:8080/api/ingestion/AuthorCard/<cardId>/auto-upload
+```
+
+### Orquestador (save -> autoReview -> autoUpload)
+```bash
+curl -X POST "http://localhost:8080/api/ingestion/AuthorCard/auto?id=<cardId>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "options": { "autoReview": true, "autoUpload": true },
+    "payload": {
+      "fullName": "Gabriela Mistral"
+    }
+  }'
+```
+
+### Orquestador creando worksheet si no existe
+```bash
+curl -X POST http://localhost:8080/api/ingestion/AuthorCard/auto \
+  -H "Content-Type: application/json" \
+  -d '{
+    "options": { "autoReview": true },
+    "worksheet": {
+      "type": "AuthorCard",
+      "title": "Gabriela Mistral",
+      "createdBy": "507f1f77bcf86cd799439011"
+    },
+    "payload": {
+      "fullName": "Gabriela Mistral"
+    }
+  }'
+```
