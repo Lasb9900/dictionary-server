@@ -39,32 +39,6 @@ npm test
 
 > Nota: los specs legacy de cards y users se ignoran temporalmente en Jest mientras se estabilizan.
 
-## Frontend integration
-
-**Base URL:** `http://localhost:8080/api`
-
-Variables de entorno relevantes (.env):
-
-```env
-MONGODB_URI=mongodb://localhost:27017/thesis
-JWT_SECRET=changeme
-PORT=8080
-CORS_ORIGIN=http://localhost:3000
-CORS_CREDENTIALS=false
-OPENAI_API_KEY=
-NEO4J_URI=
-NEO4J_USERNAME=
-NEO4J_PASSWORD=
-```
-
-Rutas relevantes:
-
-* `/cards` (endpoints existentes de cards)
-* `/ingestion` (auto-registro y auto-flujo)
-* `/health` (estado de dependencias)
-
-> Nota CORS local: el backend permite por defecto `http://localhost:3000`. Ajustar `CORS_ORIGIN` si cambia el origen del frontend.
-
 ## Stack usado
 * MongoDB
 * Nest
