@@ -7,6 +7,7 @@ import { EnvConfiguration } from './config/env.config';
 import { JoiValidationSchema } from './config/joi.validation';
 import { Neo4jModule } from './neo4j/neo4j.module';
 import { OpenaiModule } from './openai/openai.module';
+import { IngestionModule } from './ingestion/ingestion.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { OpenaiModule } from './openai/openai.module';
     UsersModule,
     Neo4jModule.forRootAsync(),
     OpenaiModule,
+    IngestionModule,
   ],
 })
 export class AppModule {}
