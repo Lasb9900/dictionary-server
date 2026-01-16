@@ -10,7 +10,7 @@ import {
 } from './entities/anthology.entity';
 import { MagazineCard, MagazineCardSchema } from './entities/magazine.entity';
 import { GroupingCard, GroupingCardSchema } from './entities/grouping.entity';
-import { OpenaiModule } from 'src/openai/openai.module';
+import { AiModule } from '../ai/ai.module';
 import {
   MythAndLegendCard,
   MythAndLegendCardSchema,
@@ -33,7 +33,7 @@ import {
         ],
       },
     ]),
-    OpenaiModule,
+    AiModule,
   ],
   exports: [CardsService, MongooseModule],
 })

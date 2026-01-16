@@ -20,6 +20,11 @@ import {
   normalizeGroupingPayload,
   normalizeMagazinePayload,
 } from './utils/normalization';
+import { AiProviderName } from '../ai/interfaces/ai-provider.interface';
+import { UpdateAuthorCardDto } from '../cards/dto/update-author-card.dto';
+import { UpdateAnthologyCardDto } from '../cards/dto/update-anthology-card.dto';
+import { UpdateMagazineCardDto } from '../cards/dto/update-magazine-card.dto';
+import { UpdateGroupingCardDto } from '../cards/dto/update-grouping-card.dto';
 
 @Injectable()
 export class IngestionService {
@@ -44,19 +49,35 @@ export class IngestionService {
 
     switch (type) {
       case IngestionCardType.AuthorCard:
-        return this.cardsService.saveAuthorCardContent(id, normalizedPayload);
+        return this.cardsService.saveAuthorCardContent(
+          id,
+          normalizedPayload as UpdateAuthorCardDto,
+        );
       case IngestionCardType.AnthologyCard:
-        return this.cardsService.saveAnthologyCardContent(id, normalizedPayload);
+        return this.cardsService.saveAnthologyCardContent(
+          id,
+          normalizedPayload as UpdateAnthologyCardDto,
+        );
       case IngestionCardType.MagazineCard:
-        return this.cardsService.saveMagazineCardContent(id, normalizedPayload);
+        return this.cardsService.saveMagazineCardContent(
+          id,
+          normalizedPayload as UpdateMagazineCardDto,
+        );
       case IngestionCardType.GroupingCard:
-        return this.cardsService.saveGroupingCardContent(id, normalizedPayload);
+        return this.cardsService.saveGroupingCardContent(
+          id,
+          normalizedPayload as UpdateGroupingCardDto,
+        );
       default:
         throw new BadRequestException('Unsupported card type');
     }
   }
 
-  async autoReview(type: IngestionCardType, id: string) {
+  async autoReview(
+    type: IngestionCardType,
+    id: string,
+    options: { providerOverride?: AiProviderName } = {},
+  ) {
     const card = await this.findCardById(id, type);
     const missingFields = this.readinessService.getMissingFieldsForReview(
       type,
@@ -76,22 +97,26 @@ export class IngestionService {
       case IngestionCardType.AuthorCard:
         return this.cardsService.updateAuthorCardAndSetPendingReview(
           id,
-          updatePayload,
+          updatePayload as UpdateAuthorCardDto,
+          { providerOverride: options.providerOverride },
         );
       case IngestionCardType.AnthologyCard:
         return this.cardsService.updateAnthologyCardAndSetPendingReview(
           id,
-          updatePayload,
+          updatePayload as UpdateAnthologyCardDto,
+          { providerOverride: options.providerOverride },
         );
       case IngestionCardType.MagazineCard:
         return this.cardsService.updateMagazineCardAndSetPendingReview(
           id,
-          updatePayload,
+          updatePayload as UpdateMagazineCardDto,
+          { providerOverride: options.providerOverride },
         );
       case IngestionCardType.GroupingCard:
         return this.cardsService.updateGroupingCardAndSetPendingReview(
           id,
-          updatePayload,
+          updatePayload as UpdateGroupingCardDto,
+          { providerOverride: options.providerOverride },
         );
       default:
         throw new BadRequestException('Unsupported card type');
@@ -130,7 +155,11 @@ export class IngestionService {
     type: IngestionCardType,
     cardId: string | undefined,
     payload: Record<string, any>,
-    options: { autoReview?: boolean; autoUpload?: boolean } = {},
+    options: {
+      autoReview?: boolean;
+      autoUpload?: boolean;
+      providerOverride?: AiProviderName;
+    } = {},
     worksheet?: IngestionWorksheetDto,
   ) {
     let targetId = cardId;
@@ -160,7 +189,9 @@ export class IngestionService {
     await this.saveByType(type, targetId, payload);
 
     if (options.autoReview) {
-      await this.autoReview(type, targetId);
+      await this.autoReview(type, targetId, {
+        providerOverride: options.providerOverride,
+      });
     }
 
     if (options.autoUpload) {

@@ -14,7 +14,7 @@ import { UpdateMagazineCardDto } from './dto/update-magazine-card.dto';
 import { UpdateAnthologyCardDto } from './dto/update-anthology-card.dto';
 import { UpdateGroupingCardDto } from './dto/update-grouping-card.dto';
 import { QueryRepository } from '../neo4j/query.repository';
-import { OpenaiService } from '../openai/openai.service';
+import { AiService } from '../ai/ai.service';
 import { userSummaryPrompt } from '../openai/prompts/user-summary';
 import { workSummaryPrompt } from '../openai/prompts/work-summary';
 import { criticismSummary } from '../openai/prompts/criticism-summary';
@@ -26,6 +26,11 @@ import { MythAndLegendCard } from './entities/mythLegend.entity';
 import { UpdateMythAndLegendCardDto } from './dto/update-mythLegend-card.dto';
 import { mythAndLegendSummaryPrompt } from '../openai/prompts/myth-legend-summary';
 import { MlType } from './interfaces/mlType.interface';
+import { AiProviderName } from '../ai/interfaces/ai-provider.interface';
+
+type CardsAiOptions = {
+  providerOverride?: AiProviderName;
+};
 
 @Injectable()
 export class CardsService {
@@ -49,7 +54,7 @@ export class CardsService {
 
     private readonly queryRepository: QueryRepository,
 
-    private readonly openaiService: OpenaiService,
+    private readonly aiService: AiService,
   ) {}
 
   async getCardById(id: string, fields: string): Promise<any> {
@@ -261,12 +266,17 @@ export class CardsService {
   async updateAuthorCardAndSetPendingReview(
     id: string,
     updateCardDto: UpdateAuthorCardDto,
+    options: CardsAiOptions = {},
   ): Promise<Card> {
     try {
+      const aiOptions = {
+        providerOverride: options.providerOverride,
+      };
+
       // Generate Author Text
-      const authorText = await this.openaiService.generateText(
-        userSummaryPrompt,
-        JSON.stringify({
+      const authorText = await this.aiService.generateText(userSummaryPrompt, {
+        ...aiOptions,
+        input: JSON.stringify({
           fullName: updateCardDto.fullName,
           gender: updateCardDto.gender,
           pseudonym: updateCardDto.pseudonym,
@@ -280,37 +290,40 @@ export class CardsService {
           mainGenre: updateCardDto.mainGenre,
           context: updateCardDto.context,
         }),
-      );
+      });
 
       // Generate Works Text
       const worksSummaries = await Promise.all(
         updateCardDto.works.map(async (work) => {
-          const worksText = await this.openaiService.generateText(
+          const worksText = await this.aiService.generateText(
             workSummaryPrompt,
-            JSON.stringify({
-              author: updateCardDto.fullName,
-              title: work.title,
-              originalLanguage: work.originalLanguage,
-              genre: work.genre,
-              publicationDate: work.publicationDate,
-              publicationPlace: {
-                city: work.publicationPlace?.city,
-                printingHouse: work.publicationPlace?.printingHouse,
-                publisher: work.publicationPlace?.publisher,
-              },
-              editions: work.editions.map((edition) => ({
-                publicationDate: edition.publicationDate,
-                editiontitle: edition.editiontitle,
-                language: edition.language,
-                translator: edition.translator,
+            {
+              ...aiOptions,
+              input: JSON.stringify({
+                author: updateCardDto.fullName,
+                title: work.title,
+                originalLanguage: work.originalLanguage,
+                genre: work.genre,
+                publicationDate: work.publicationDate,
                 publicationPlace: {
-                  city: edition.publicationPlace?.city,
-                  printingHouse: edition.publicationPlace?.printingHouse,
-                  publisher: edition.publicationPlace?.publisher,
+                  city: work.publicationPlace?.city,
+                  printingHouse: work.publicationPlace?.printingHouse,
+                  publisher: work.publicationPlace?.publisher,
                 },
-              })),
-              description: work.description,
-            }),
+                editions: work.editions.map((edition) => ({
+                  publicationDate: edition.publicationDate,
+                  editiontitle: edition.editiontitle,
+                  language: edition.language,
+                  translator: edition.translator,
+                  publicationPlace: {
+                    city: edition.publicationPlace?.city,
+                    printingHouse: edition.publicationPlace?.printingHouse,
+                    publisher: edition.publicationPlace?.publisher,
+                  },
+                })),
+                description: work.description,
+              }),
+            },
           );
           return worksText;
         }),
@@ -319,18 +332,21 @@ export class CardsService {
       // Generate Criticism Text
       const criticismsSummaries = await Promise.all(
         updateCardDto.criticism.map(async (criticism) => {
-          const criticismText = await this.openaiService.generateText(
+          const criticismText = await this.aiService.generateText(
             criticismSummary,
-            JSON.stringify({
-              title: criticism.title,
-              type: criticism.type,
-              author: criticism.author,
-              publicationDate: criticism.publicationDate,
-              link: criticism.link,
-              bibliographicReference: criticism.bibliographicReference,
-              description: criticism.description,
-              text: criticism.text,
-            }),
+            {
+              ...aiOptions,
+              input: JSON.stringify({
+                title: criticism.title,
+                type: criticism.type,
+                author: criticism.author,
+                publicationDate: criticism.publicationDate,
+                link: criticism.link,
+                bibliographicReference: criticism.bibliographicReference,
+                description: criticism.description,
+                text: criticism.text,
+              }),
+            },
           );
           return criticismText;
         }),
@@ -377,43 +393,54 @@ export class CardsService {
   async updateMagazineCardAndSetPendingReview(
     id: string,
     updateCardDto: UpdateMagazineCardDto,
+    options: CardsAiOptions = {},
   ): Promise<Card> {
     try {
-      const magazineDescription = await this.openaiService.generateText(
+      const aiOptions = {
+        providerOverride: options.providerOverride,
+      };
+
+      const magazineDescription = await this.aiService.generateText(
         magazineSummaryPrompt,
-        JSON.stringify({
-          magazineTitle: updateCardDto.magazineTitle,
-          originalLanguage: updateCardDto.originalLanguage,
-          firstIssueDate: updateCardDto.firstIssueDate,
-          lastIssueDate: updateCardDto.lastIssueDate,
-          issuesPublished: updateCardDto.issuesPublished,
-          publicationPlace: {
-            city: updateCardDto.publicationPlace?.city,
-            printingHouse: updateCardDto.publicationPlace?.printingHouse,
-            publisher: updateCardDto.publicationPlace?.publisher,
-          },
-          creators: updateCardDto.creators.map((creator) => ({
-            role: creator.role,
-            name: creator.name,
-          })),
-          sections: updateCardDto.sections,
-          description: updateCardDto.description,
-        }),
+        {
+          ...aiOptions,
+          input: JSON.stringify({
+            magazineTitle: updateCardDto.magazineTitle,
+            originalLanguage: updateCardDto.originalLanguage,
+            firstIssueDate: updateCardDto.firstIssueDate,
+            lastIssueDate: updateCardDto.lastIssueDate,
+            issuesPublished: updateCardDto.issuesPublished,
+            publicationPlace: {
+              city: updateCardDto.publicationPlace?.city,
+              printingHouse: updateCardDto.publicationPlace?.printingHouse,
+              publisher: updateCardDto.publicationPlace?.publisher,
+            },
+            creators: updateCardDto.creators.map((creator) => ({
+              role: creator.role,
+              name: creator.name,
+            })),
+            sections: updateCardDto.sections,
+            description: updateCardDto.description,
+          }),
+        },
       );
 
       const criticismsSummaries = await Promise.all(
         updateCardDto.criticism.map(async (criticism) => {
-          const criticismText = await this.openaiService.generateText(
+          const criticismText = await this.aiService.generateText(
             criticismSummary,
-            JSON.stringify({
-              title: criticism.title,
-              type: criticism.type,
-              author: criticism.author,
-              publicationDate: criticism.publicationDate,
-              link: criticism.link,
-              bibliographicReference: criticism.bibliographicReference,
-              description: criticism.description,
-            }),
+            {
+              ...aiOptions,
+              input: JSON.stringify({
+                title: criticism.title,
+                type: criticism.type,
+                author: criticism.author,
+                publicationDate: criticism.publicationDate,
+                link: criticism.link,
+                bibliographicReference: criticism.bibliographicReference,
+                description: criticism.description,
+              }),
+            },
           );
           return criticismText;
         }),
@@ -456,38 +483,49 @@ export class CardsService {
   async updateAnthologyCardAndSetPendingReview(
     id: string,
     updateCardDto: UpdateAnthologyCardDto,
+    options: CardsAiOptions = {},
   ): Promise<Card> {
     try {
-      const anthologyDescription = await this.openaiService.generateText(
+      const aiOptions = {
+        providerOverride: options.providerOverride,
+      };
+
+      const anthologyDescription = await this.aiService.generateText(
         anthologySummaryPrompt,
-        JSON.stringify({
-          anthologyTitle: updateCardDto.anthologyTitle,
-          genre: updateCardDto.genre,
-          author: updateCardDto.author,
-          originalLanguage: updateCardDto.originalLanguage,
-          publicationDate: updateCardDto.publicationDate,
-          publicationPlace: {
-            city: updateCardDto.publicationPlace?.city,
-            printingHouse: updateCardDto.publicationPlace?.printingHouse,
-            publisher: updateCardDto.publicationPlace?.publisher,
-          },
-          description: updateCardDto.description,
-        }),
+        {
+          ...aiOptions,
+          input: JSON.stringify({
+            anthologyTitle: updateCardDto.anthologyTitle,
+            genre: updateCardDto.genre,
+            author: updateCardDto.author,
+            originalLanguage: updateCardDto.originalLanguage,
+            publicationDate: updateCardDto.publicationDate,
+            publicationPlace: {
+              city: updateCardDto.publicationPlace?.city,
+              printingHouse: updateCardDto.publicationPlace?.printingHouse,
+              publisher: updateCardDto.publicationPlace?.publisher,
+            },
+            description: updateCardDto.description,
+          }),
+        },
       );
 
       const criticismsSummaries = await Promise.all(
         updateCardDto.criticism.map(async (criticism) => {
-          const criticismText = await this.openaiService.generateText(
+          const criticismText = await this.aiService.generateText(
             criticismSummary,
-            JSON.stringify({
-              title: criticism.title,
-              type: criticism.type,
-              author: criticism.author,
-              publicationDate: criticism.publicationDate,
-              link: criticism.link,
-              bibliographicReference: criticism.bibliographicReference,
-              description: criticism.description,
-            }),
+            {
+              ...aiOptions,
+              input: JSON.stringify({
+                title: criticism.title,
+                type: criticism.type,
+                author: criticism.author,
+                publicationDate: criticism.publicationDate,
+                link: criticism.link,
+                bibliographicReference: criticism.bibliographicReference,
+                description: criticism.description,
+              }),
+            },
           );
           return criticismText;
         }),
@@ -530,46 +568,57 @@ export class CardsService {
   async updateGroupingCardAndSetPendingReview(
     id: string,
     updateCardDto: UpdateGroupingCardDto,
+    options: CardsAiOptions = {},
   ): Promise<Card> {
     try {
-      const groupDescription = await this.openaiService.generateText(
+      const aiOptions = {
+        providerOverride: options.providerOverride,
+      };
+
+      const groupDescription = await this.aiService.generateText(
         groupingSummaryPrompt,
-        JSON.stringify({
-          name: updateCardDto.name,
-          meetingPlace: {
-            city: updateCardDto.meetingPlace?.city,
-            municipality: updateCardDto.meetingPlace?.municipality,
-          },
-          startDate: updateCardDto.startDate,
-          endDate: updateCardDto.endDate,
-          generalCharacteristics: updateCardDto.generalCharacteristics,
-          members: updateCardDto.members,
-          groupPublications: updateCardDto.groupPublications.map(
-            (publication) => ({
-              title: publication.title,
-              year: publication.year,
-              authors: publication.authors,
-              summary: publication.summary,
-            }),
-          ),
-          groupActivities: updateCardDto.groupActivities,
-        }),
+        {
+          ...aiOptions,
+          input: JSON.stringify({
+            name: updateCardDto.name,
+            meetingPlace: {
+              city: updateCardDto.meetingPlace?.city,
+              municipality: updateCardDto.meetingPlace?.municipality,
+            },
+            startDate: updateCardDto.startDate,
+            endDate: updateCardDto.endDate,
+            generalCharacteristics: updateCardDto.generalCharacteristics,
+            members: updateCardDto.members,
+            groupPublications: updateCardDto.groupPublications.map(
+              (publication) => ({
+                title: publication.title,
+                year: publication.year,
+                authors: publication.authors,
+                summary: publication.summary,
+              }),
+            ),
+            groupActivities: updateCardDto.groupActivities,
+          }),
+        },
       );
 
       const criticismsSummaries = await Promise.all(
         updateCardDto.criticism.map(async (criticism) => {
-          const criticismText = await this.openaiService.generateText(
+          const criticismText = await this.aiService.generateText(
             criticismSummary,
-            JSON.stringify({
-              title: criticism.title,
-              type: criticism.type,
-              author: criticism.author,
-              publicationDate: criticism.publicationDate,
-              link: criticism.link,
-              bibliographicReference: criticism.bibliographicReference,
-              description: criticism.description,
-              text: criticism.text,
-            }),
+            {
+              ...aiOptions,
+              input: JSON.stringify({
+                title: criticism.title,
+                type: criticism.type,
+                author: criticism.author,
+                publicationDate: criticism.publicationDate,
+                link: criticism.link,
+                bibliographicReference: criticism.bibliographicReference,
+                description: criticism.description,
+                text: criticism.text,
+              }),
+            },
           );
           return criticismText;
         }),
@@ -613,38 +662,49 @@ export class CardsService {
   async updateMythAndLegendCardAndSetPendingReview(
     id: string,
     updateCardDto: UpdateMythAndLegendCardDto,
+    options: CardsAiOptions = {},
   ): Promise<Card> {
     try {
+      const aiOptions = {
+        providerOverride: options.providerOverride,
+      };
+
       // Generar la descripción de Mitos y Leyendas
-      const mythLegendDescription = await this.openaiService.generateText(
+      const mythLegendDescription = await this.aiService.generateText(
         mythAndLegendSummaryPrompt,
-        JSON.stringify({
-          mlTitle: updateCardDto.mlTitle,
-          mlType: updateCardDto.mlType,
-          creatorCommunity: updateCardDto.creatorCommunity,
-          diffusionPlace: updateCardDto.diffusionPlace,
-          originalLanguage: updateCardDto.originalLanguage,
-          fullText: updateCardDto.fullText,
-          mainTheme: updateCardDto.mainTheme,
-          description: updateCardDto.description,
-        }),
+        {
+          ...aiOptions,
+          input: JSON.stringify({
+            mlTitle: updateCardDto.mlTitle,
+            mlType: updateCardDto.mlType,
+            creatorCommunity: updateCardDto.creatorCommunity,
+            diffusionPlace: updateCardDto.diffusionPlace,
+            originalLanguage: updateCardDto.originalLanguage,
+            fullText: updateCardDto.fullText,
+            mainTheme: updateCardDto.mainTheme,
+            description: updateCardDto.description,
+          }),
+        },
       );
 
       // Generar los textos de críticas
       const criticismsSummaries = await Promise.all(
         updateCardDto.criticism.map(async (criticism) => {
-          const criticismText = await this.openaiService.generateText(
+          const criticismText = await this.aiService.generateText(
             criticismSummary,
-            JSON.stringify({
-              title: criticism.title,
-              type: criticism.type,
-              author: criticism.author,
-              publicationDate: criticism.publicationDate,
-              link: criticism.link,
-              bibliographicReference: criticism.bibliographicReference,
-              description: criticism.description,
-              text: criticism.text,
-            }),
+            {
+              ...aiOptions,
+              input: JSON.stringify({
+                title: criticism.title,
+                type: criticism.type,
+                author: criticism.author,
+                publicationDate: criticism.publicationDate,
+                link: criticism.link,
+                bibliographicReference: criticism.bibliographicReference,
+                description: criticism.description,
+                text: criticism.text,
+              }),
+            },
           );
           return criticismText;
         }),

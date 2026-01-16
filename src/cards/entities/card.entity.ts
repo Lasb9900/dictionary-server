@@ -4,7 +4,7 @@ import { AuthorCard } from './author.entity';
 import { AnthologyCard } from './anthology.entity';
 import { GroupingCard } from './grouping.entity';
 import { MagazineCard } from './magazine.entity';
-import { User } from 'src/users/entities/user.entity';
+import { User } from '../../users/entities/user.entity';
 import { CardStatus } from '../interfaces/card-status.interface';
 import { MythAndLegendCard } from './mythLegend.entity';
 
