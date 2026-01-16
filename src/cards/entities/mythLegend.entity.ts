@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Multimedia } from '../interfaces/multimedia.interface';
 import { Criticism } from '../interfaces/criticism.interface';
-import { User } from 'src/users/entities/user.entity';
+import { User } from '../../users/entities/user.entity';
 import { CardStatus } from '../interfaces/card-status.interface';
 import { MlType } from '../interfaces/mlType.interface';
 

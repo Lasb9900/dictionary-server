@@ -6,7 +6,18 @@ services:
     restart: always
     ports:
       - 27017:27017
-    environment:
-      MONGODB_DATABASE: dict-db
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     volumes:
       - ./mongo:/data/db
+
+  db-init:
+    image: mongo:5
+    depends_on:
+      - db
+    restart: "no"
+    entrypoint:
+      [
+        "bash",
+        "-c",
+        "sleep 2 && mongo --host db:27017 --eval \"rs.initiate({_id: 'rs0', members: [{ _id: 0, host: 'db:27017' }]})\"",
+      ]

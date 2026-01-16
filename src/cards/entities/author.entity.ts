@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { User } from 'src/users/entities/user.entity';
+import { User } from '../../users/entities/user.entity';
 import { CardStatus } from '../interfaces/card-status.interface';
 import { Multimedia } from '../interfaces/multimedia.interface';
 import { Gender } from '../interfaces/gender.interface';

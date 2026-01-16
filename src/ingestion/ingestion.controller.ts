@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Headers,
   Param,
   ParseEnumPipe,
   Post,
@@ -12,6 +13,8 @@ import {
   IngestionWorksheetDto,
 } from './dto/ingestion-worksheet.dto';
 import { IngestionAutoDto } from './dto/ingestion-auto.dto';
+import { AI_PROVIDER_HEADER } from '../ai/ai.constants';
+import { normalizeAiProvider } from '../ai/ai.utils';
 
 @Controller('ingestion')
 export class IngestionController {
@@ -37,8 +40,12 @@ export class IngestionController {
     @Param('type', new ParseEnumPipe(IngestionCardType))
     type: IngestionCardType,
     @Param('id') id: string,
+    @Headers(AI_PROVIDER_HEADER) providerHeader?: string,
   ) {
-    return this.ingestionService.autoReview(type, id);
+    const providerOverride = normalizeAiProvider(providerHeader);
+    return this.ingestionService.autoReview(type, id, {
+      providerOverride,
+    });
   }
 
   @Post(':type/:id/auto-upload')
@@ -56,12 +63,38 @@ export class IngestionController {
     type: IngestionCardType,
     @Query('id') id: string | undefined,
     @Body() dto: IngestionAutoDto,
+    @Headers(AI_PROVIDER_HEADER) providerHeader?: string,
   ) {
+    const providerOverride = normalizeAiProvider(providerHeader);
     return this.ingestionService.autoOrchestrate(
       type,
       id,
       dto.payload,
-      dto.options,
+      {
+        ...dto.options,
+        providerOverride,
+      },
+      dto.worksheet,
+    );
+  }
+
+  @Post(':type/:id/auto-orchestrate')
+  async autoOrchestrateById(
+    @Param('type', new ParseEnumPipe(IngestionCardType))
+    type: IngestionCardType,
+    @Param('id') id: string,
+    @Body() dto: IngestionAutoDto,
+    @Headers(AI_PROVIDER_HEADER) providerHeader?: string,
+  ) {
+    const providerOverride = normalizeAiProvider(providerHeader);
+    return this.ingestionService.autoOrchestrate(
+      type,
+      id,
+      dto.payload,
+      {
+        ...dto.options,
+        providerOverride,
+      },
       dto.worksheet,
     );
   }
