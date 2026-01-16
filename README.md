@@ -29,6 +29,16 @@ docker-compose up -d
 yarn start:dev
 ```
 
+## Tests
+
+Para ejecutar los tests:
+
+```
+npm test
+```
+
+> Nota: los specs legacy de cards y users se ignoran temporalmente en Jest mientras se estabilizan.
+
 ## Stack usado
 * MongoDB
 * Nest
