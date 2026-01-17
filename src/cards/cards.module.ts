@@ -15,6 +15,7 @@ import {
   MythAndLegendCard,
   MythAndLegendCardSchema,
 } from './entities/mythLegend.entity';
+import { WorkCard, WorkCardSchema } from './entities/work.entity';
 
 @Module({
   controllers: [CardsController],
@@ -30,6 +31,7 @@ import {
           { name: MagazineCard.name, schema: MagazineCardSchema },
           { name: GroupingCard.name, schema: GroupingCardSchema },
           { name: MythAndLegendCard.name, schema: MythAndLegendCardSchema },
+          { name: WorkCard.name, schema: WorkCardSchema },
         ],
       },
     ]),

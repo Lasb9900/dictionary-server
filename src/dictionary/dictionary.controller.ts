@@ -1,6 +1,7 @@
 import { Body, Controller, Headers, Param, Post } from '@nestjs/common';
 import { DictionaryService } from './dictionary.service';
 import { DictionaryAskDto } from './dto/dictionary-ask.dto';
+import { DictionaryAskLegacyDto } from './dto/dictionary-ask-legacy.dto';
 import { Auth } from '../users/decorators/auth.decorators';
 import { UserRoles } from '../users/interfaces/user-roles.interface';
 import { AI_PROVIDER_HEADER } from '../ai/ai.constants';
@@ -10,11 +11,21 @@ import { normalizeAiProvider } from '../ai/ai.utils';
 export class DictionaryController {
   constructor(private readonly dictionaryService: DictionaryService) {}
 
+  @Post('ask')
+  @Auth(UserRoles.ADMINISTRATOR, UserRoles.RESEARCHER)
+  async askIntro(
+    @Body() dto: DictionaryAskDto,
+    @Headers(AI_PROVIDER_HEADER) providerHeader?: string,
+  ) {
+    const providerOverride = normalizeAiProvider(providerHeader);
+    return this.dictionaryService.askIntro(dto, providerOverride);
+  }
+
   @Post(':id/ask')
   @Auth(UserRoles.ADMINISTRATOR, UserRoles.RESEARCHER)
   async ask(
     @Param('id') id: string,
-    @Body() dto: DictionaryAskDto,
+    @Body() dto: DictionaryAskLegacyDto,
     @Headers(AI_PROVIDER_HEADER) providerHeader?: string,
   ) {
     const providerOverride = normalizeAiProvider(providerHeader);
