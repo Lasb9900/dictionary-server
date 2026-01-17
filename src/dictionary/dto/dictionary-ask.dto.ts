@@ -1,10 +1,14 @@
-import { ArrayNotEmpty, IsArray, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsMongoId, IsOptional, IsString } from 'class-validator';
 
 export class DictionaryAskDto {
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsString({ each: true })
-  question: string[];
+  @IsString()
+  question: string;
+
+  @IsOptional()
+  @IsMongoId()
+  cardId?: string;
+
+  @IsOptional()
+  @IsString()
+  cardType?: string;
 }

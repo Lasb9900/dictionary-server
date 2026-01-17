@@ -3,6 +3,7 @@ import { Publication } from './publication-place.interface';
 import { Edition } from '../interfaces/edition.interface';
 
 export interface Work {
+  workId?: string;
   title?: string;
   originalLanguage?: string;
   genre?: string;

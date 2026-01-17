@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, isValidObjectId } from 'mongoose';
 import { AuthorCard } from './entities/author.entity';
 import { CreateCardDto } from './dto/create-card.dto';
 import { AnthologyCard } from './entities/anthology.entity';
@@ -31,6 +31,9 @@ import { UpdateMythAndLegendCardDto } from './dto/update-mythLegend-card.dto';
 import { mythAndLegendSummaryPrompt } from '../openai/prompts/myth-legend-summary';
 import { MlType } from './interfaces/mlType.interface';
 import { AiProviderName } from '../ai/interfaces/ai-provider.interface';
+import { WorkCard } from './entities/work.entity';
+import { CreateWorkCardDto } from './dto/create-work-card.dto';
+import { escapeRegex, normalizeAuthorName } from './utils/author-normalization';
 
 type CardsAiOptions = {
   providerOverride?: AiProviderName;
@@ -55,6 +58,9 @@ export class CardsService {
 
     @InjectModel(MythAndLegendCard.name)
     private readonly mythAndLegendCardModel: Model<MythAndLegendCard>,
+
+    @InjectModel(WorkCard.name)
+    private readonly workCardModel: Model<WorkCard>,
 
     private readonly queryRepository: QueryRepository,
 
@@ -102,6 +108,9 @@ export class CardsService {
           break;
         case 'MythLegendCard':
           createdCard = new this.mythAndLegendCardModel(data);
+          break;
+        case 'WorkCard':
+          createdCard = new this.workCardModel(data);
           break;
         default:
           throw new Error('Invalid card type');
@@ -151,6 +160,9 @@ export class CardsService {
     updateCardDto: UpdateAuthorCardDto,
   ): Promise<Card> {
     try {
+      if (updateCardDto.fullName) {
+        updateCardDto.authorKey = normalizeAuthorName(updateCardDto.fullName);
+      }
       const updatedCard = await this.authorCardModel.findByIdAndUpdate(
         id,
         updateCardDto,
@@ -293,6 +305,10 @@ export class CardsService {
     updateCardDto.context = updateCardDto.context ?? '';
     updateCardDto.works = updateCardDto.works ?? [];
     updateCardDto.criticism = updateCardDto.criticism ?? [];
+
+    if (updateCardDto.fullName) {
+      updateCardDto.authorKey = normalizeAuthorName(updateCardDto.fullName);
+    }
 
     // Asegurar ediciones dentro de works
     updateCardDto.works = updateCardDto.works.map((w: any) => ({
@@ -1458,7 +1474,141 @@ export class CardsService {
   }
 
   async findByIdRaw(id: string) {
-  return this.cardModel.findById(id).lean();
-}
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid card id.');
+    }
+    return this.cardModel.findById(id).lean().exec();
+  }
 
+  async searchCardsByTitleOrFullName(
+    query: string,
+    limit = 3,
+    cardType?: string,
+  ) {
+    const normalized = query.trim();
+    if (!normalized) {
+      return [];
+    }
+    const regex = new RegExp(escapeRegex(normalized), 'i');
+    const filter: Record<string, any> = {
+      $or: [{ title: regex }, { fullName: regex }],
+    };
+    if (cardType) {
+      filter.type = cardType;
+    }
+
+    return this.cardModel
+      .find(filter)
+      .limit(limit)
+      .select('type title fullName')
+      .lean()
+      .exec();
+  }
+
+  async createWorkCardWithAuthor(dto: CreateWorkCardDto) {
+    const title = dto.title?.trim();
+    const authorFullName = dto.authorFullName?.trim();
+
+    if (!title || !authorFullName) {
+      throw new BadRequestException('title and authorFullName are required.');
+    }
+
+    const authorKey = normalizeAuthorName(authorFullName);
+    const session = await this.cardModel.db.startSession();
+    session.startTransaction();
+
+    try {
+      let authorCard = await this.authorCardModel
+        .findOne({ authorKey })
+        .session(session)
+        .exec();
+
+      if (!authorCard) {
+        const nameRegex = new RegExp(
+          `^${escapeRegex(authorFullName)}$`,
+          'i',
+        );
+        authorCard = await this.authorCardModel
+          .findOne({ fullName: nameRegex })
+          .session(session)
+          .exec();
+
+        if (authorCard && !authorCard.authorKey) {
+          await this.authorCardModel.updateOne(
+            { _id: authorCard._id },
+            { authorKey },
+            { session },
+          );
+          authorCard.authorKey = authorKey;
+        }
+      }
+
+      let authorWasCreated = false;
+      if (!authorCard) {
+        authorWasCreated = true;
+        const created = await this.authorCardModel.create(
+          [
+            {
+              type: AuthorCard.name,
+              title: authorFullName,
+              fullName: authorFullName,
+              authorKey,
+            },
+          ],
+          { session },
+        );
+        authorCard = created[0];
+      }
+
+      const [workCard] = await this.workCardModel.create(
+        [
+          {
+            type: WorkCard.name,
+            title,
+            authorFullName: authorCard.fullName,
+            authorCardId: authorCard._id,
+            createdBy: dto.createdBy,
+            originalLanguage: dto.originalLanguage,
+            genre: dto.genre,
+            publicationDate: dto.publicationDate,
+            description: dto.description,
+          },
+        ],
+        { session },
+      );
+
+      await this.authorCardModel.updateOne(
+        { _id: authorCard._id, 'works.workId': { $ne: workCard._id } },
+        { $push: { works: { workId: workCard._id, title: workCard.title } } },
+        { session },
+      );
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return {
+        authorCardId: authorCard._id.toString(),
+        workCardId: workCard._id.toString(),
+        authorWasCreated,
+      };
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+
+      if (error?.code === 11000 && error?.keyPattern?.authorKey) {
+        const existing = await this.authorCardModel
+          .findOne({ authorKey })
+          .lean()
+          .exec();
+        if (existing) {
+          return this.createWorkCardWithAuthor({
+            ...dto,
+            authorFullName: existing.fullName ?? dto.authorFullName,
+          });
+        }
+      }
+
+      throw error;
+    }
+  }
 }

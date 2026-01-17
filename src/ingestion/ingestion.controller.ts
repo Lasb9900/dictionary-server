@@ -15,6 +15,7 @@ import {
 import { IngestionAutoDto } from './dto/ingestion-auto.dto';
 import { AI_PROVIDER_HEADER } from '../ai/ai.constants';
 import { normalizeAiProvider } from '../ai/ai.utils';
+import { IngestionSaveDto } from './dto/ingestion-save.dto';
 
 @Controller('ingestion')
 export class IngestionController {
@@ -30,9 +31,9 @@ export class IngestionController {
     @Param('type', new ParseEnumPipe(IngestionCardType))
     type: IngestionCardType,
     @Param('id') id: string,
-    @Body() payload: Record<string, any>,
+    @Body() dto: IngestionSaveDto,
   ) {
-    return this.ingestionService.saveByType(type, id, payload);
+    return this.ingestionService.saveByType(type, id, dto.payload);
   }
 
   @Post(':type/:id/auto-review')

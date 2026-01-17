@@ -21,6 +21,7 @@ import { AnthologyCard } from './entities/anthology.entity';
 import { GroupingCard } from './entities/grouping.entity';
 import { UpdateMythAndLegendCardDto } from './dto/update-mythLegend-card.dto';
 import { MythAndLegendCard } from './entities/mythLegend.entity';
+import { CreateWorkCardDto } from './dto/create-work-card.dto';
 
 @Controller('cards')
 export class CardsController {
@@ -29,6 +30,11 @@ export class CardsController {
   @Post()
   async createCard(@Body() createCardDto: CreateCardDto): Promise<Card> {
     return this.cardsService.createCard(createCardDto);
+  }
+
+  @Post('work')
+  async createWorkCardWithAuthor(@Body() dto: CreateWorkCardDto) {
+    return this.cardsService.createWorkCardWithAuthor(dto);
   }
 
   @Get('texts/:id')
