@@ -1,6 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AiGenerateInput, AiProvider } from '../interfaces/ai-provider.interface';
+import {
+  AiEmbedInput,
+  AiGenerateInput,
+  AiProvider,
+} from '../interfaces/ai-provider.interface';
 
 @Injectable()
 export class GeminiProvider implements AiProvider {
@@ -78,5 +82,59 @@ export class GeminiProvider implements AiProvider {
     }
 
     return content;
+  }
+
+  async embedText(input: AiEmbedInput): Promise<number[]> {
+    const apiKey = this.configService.get<string>('geminiApiKey');
+    if (!apiKey) {
+      throw new BadRequestException('GEMINI_API_KEY is not configured.');
+    }
+
+    const model =
+      input.model ??
+      this.configService.get<string>('geminiModel') ??
+      'gemini-2.0-flash';
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: {
+            role: 'user',
+            parts: [{ text: input.text }],
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      const normalized = errorText.toLowerCase();
+      if (
+        response.status === 404 ||
+        normalized.includes('model') ||
+        normalized.includes('not found') ||
+        normalized.includes('model_not_found')
+      ) {
+        throw new BadRequestException(
+          `Gemini model "${model}" is not available. Check GEMINI_MODEL.`,
+        );
+      }
+      throw new BadRequestException(
+        `Gemini embedding failed (${response.status}): ${errorText}`,
+      );
+    }
+
+    const payload = await response.json();
+    const values = payload?.embedding?.values;
+    if (!Array.isArray(values)) {
+      throw new BadRequestException('Gemini embedding response is invalid.');
+    }
+
+    return values;
   }
 }

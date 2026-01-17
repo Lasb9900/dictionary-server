@@ -98,6 +98,9 @@ export class QueryRepository implements OnApplicationShutdown {
                             work.publicationDate = COALESCE(workData.publicationDate, 'No hay información'), 
                             work.description = COALESCE(workData.description, 'No hay información'),
                             work.text = COALESCE(workData.text, 'No hay información')
+            FOREACH (_ IN CASE WHEN workData.embedding IS NOT NULL THEN [1] ELSE [] END |
+                SET work.descriptionEmbedding = workData.embedding
+            )
             MERGE (card)-[:CREATED]->(work)
 
             // Crear o actualizar el lugar de publicación de la obra
@@ -182,12 +185,6 @@ export class QueryRepository implements OnApplicationShutdown {
             )
         )
         
-        WITH card
-        CALL {
-            MATCH (work:Work {fichaId: $id})
-            WITH work, genai.vector.encode(work.description,"OpenAI", {token: $openAiApiKey}) AS vector
-            CALL db.create.setNodeVectorProperty(work, "descriptionEmbedding", vector)
-        }
       `,
         authorData,
       )
@@ -593,16 +590,7 @@ export class QueryRepository implements OnApplicationShutdown {
       .run();
   }
 
-  async encodeWorkDescription(openAiToken: any): Promise<void> {
-    const query = this.connection.query();
-
-    await query
-      .raw(
-        `
-
-        `,
-        openAiToken,
-      )
-      .run();
+  async encodeWorkDescription(): Promise<void> {
+    return;
   }
 }

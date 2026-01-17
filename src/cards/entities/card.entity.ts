@@ -7,6 +7,7 @@ import { MagazineCard } from './magazine.entity';
 import { User } from '../../users/entities/user.entity';
 import { CardStatus } from '../interfaces/card-status.interface';
 import { MythAndLegendCard } from './mythLegend.entity';
+import { WorkCard } from './work.entity';
 
 @Schema({ discriminatorKey: 'type' })
 export class Card extends Document {
@@ -18,6 +19,7 @@ export class Card extends Document {
       GroupingCard.name,
       MagazineCard.name,
       MythAndLegendCard.name,
+      WorkCard.name,
     ],
   })
   type: string;

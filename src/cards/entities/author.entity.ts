@@ -60,6 +60,9 @@ export class AuthorCard {
   @Prop()
   works: Work[];
 
+  @Prop({ index: true, unique: true, sparse: true })
+  authorKey?: string;
+
   @Prop()
   criticism: Criticism[];
 

@@ -9,7 +9,14 @@ import {
 // Importing necessary decorators from class-validator
 export class CreateCardDto {
   @IsString()
-  @IsEnum(['AuthorCard', 'AnthologyCard', 'GroupingCard', 'MagazineCard'])
+  @IsEnum([
+    'AuthorCard',
+    'AnthologyCard',
+    'GroupingCard',
+    'MagazineCard',
+    'MythLegendCard',
+    'WorkCard',
+  ])
   type: string;
 
   @IsString()

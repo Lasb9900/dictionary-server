@@ -11,6 +11,10 @@ export class UpdateAuthorCardDto {
   fullName: string;
 
   @IsOptional()
+  @IsString()
+  authorKey?: string;
+
+  @IsOptional()
   @IsEnum(Gender)
   gender: Gender;
 

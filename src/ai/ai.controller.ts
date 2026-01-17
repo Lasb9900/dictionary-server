@@ -29,7 +29,7 @@ export class AiController {
     @Headers(AI_PROVIDER_HEADER) providerHeader?: string,
   ) {
     const providerOverride = normalizeAiProvider(providerHeader ?? dto.provider);
-    const result = await this.aiService.generateText(dto.prompt, {
+    const result = await this.aiService.generateWithFallback(dto.prompt, {
       providerOverride,
     });
 
