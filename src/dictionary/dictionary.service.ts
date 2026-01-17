@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AiService } from '../ai/ai.service';
 import { AiProviderName } from '../ai/interfaces/ai-provider.interface';
+import { CardsService } from '../cards/cards.service';
 
 type DictionaryEnvelopeType =
   | 'biography'
@@ -13,7 +14,10 @@ type DictionaryEnvelopeType =
 
 @Injectable()
 export class DictionaryService {
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly cardsService: CardsService,
+  ) {}
 
   async ask(
     dictionaryId: string,
@@ -22,7 +26,6 @@ export class DictionaryService {
   ) {
     const query = questions.join('\n');
     const providerUsed = this.aiService.resolveProviderName(providerOverride);
-
     const type: DictionaryEnvelopeType = this.resolveType(query);
 
     if (type === 'model') {
@@ -38,27 +41,87 @@ export class DictionaryService {
       };
     }
 
-    const prompt = `Responde en español con un resumen conciso y factual.\n\n${query}`;
-    const answer = await this.aiService.generateText(prompt, {
-      providerOverride,
-    });
+    // 1) Cargar ficha REAL
+    const card = await this.cardsService.findByIdRaw(dictionaryId);
+    if (!card) throw new NotFoundException(`Card not found: ${dictionaryId}`);
 
-    const payload = {
-      dictionaryId,
-      provider: providerUsed,
-      answer: answer.output,
-      multimedia: {
-        images: [],
-        videos: [],
-        audios: [],
-        documents: [],
-      },
-    };
+    // 2) Contexto (puedes reducirlo si luego quieres)
+    const context = JSON.stringify(card);
+
+    // 3) Detectar si el usuario pide JSON estricto
+    const wantsJson =
+      query.toLowerCase().includes('devuelve') &&
+      query.toLowerCase().includes('json');
+
+    // 4) Prompt anclado + reglas anti-invención
+const prompt = [
+  `Eres un extractor de datos. Tu trabajo es EXTRAER campos SOLO del CONTEXTO.`,
+  `REGLAS (estrictas):`,
+  `- NO uses conocimiento general. NO completes con suposiciones.`,
+  `- Si un dato NO aparece literalmente en el CONTEXTO, usa null.`,
+  `- Devuelve SOLO JSON valido (sin markdown, sin texto extra).`,
+  `- Respeta este esquema EXACTO:`,
+  `  { "nacimiento": string|null, "muerte": string|null, "nacionalidad": string|null, "obras": string[] }`,
+  `- "obras" solo puede incluir titulos que esten en el CONTEXTO. Si no hay, devuelve [].`,
+  `- "obras" SOLO puede salir de works del CONTEXTO. Si works esta vacio o no existe, devuelve obras: []. NO uses title ni fullName como obras.`,
+
+  ``,
+  `CONTEXTO (ficha):`,
+  context,
+  ``,
+  `PREGUNTA:`,
+  query,
+].join('\n');
+
+    const answer = await this.aiService.generateText(prompt, { providerOverride });
+
+    // 5) Si pidió JSON, intentamos parsear para devolver objeto real
+    let parsedAnswer: any = null;
+    if (wantsJson) {
+      try {
+        parsedAnswer = JSON.parse(answer.output);
+      } catch {
+        parsedAnswer = null; // si el modelo no devolvió JSON válido
+      }
+    }
+
+    function sanitizeAnswer(obj: any) {
+  const safe = {
+    nacimiento: typeof obj?.nacimiento === 'string' ? obj.nacimiento : null,
+    muerte: typeof obj?.muerte === 'string' ? obj.muerte : null,
+    nacionalidad: typeof obj?.nacionalidad === 'string' ? obj.nacionalidad : null,
+    obras: Array.isArray(obj?.obras) ? obj.obras.filter((x: any) => typeof x === 'string') : [],
+  };
+  return safe;
+}
+   parsedAnswer = sanitizeAnswer(parsedAnswer);
+
+   const worksFromContext: string[] = Array.isArray((card as any).works)
+  ? (card as any).works
+      .map((w: any) => (typeof w === 'string' ? w : w?.title))
+      .filter((t: any) => typeof t === 'string' && t.trim().length > 0)
+  : [];
+
+if (parsedAnswer) {
+  parsedAnswer.obras = worksFromContext.length ? parsedAnswer.obras : [];
+}
+
+
 
     return {
       type,
       query,
-      result: `json ${JSON.stringify(payload)}`,
+      result: {
+        dictionaryId,
+        provider: providerUsed,
+        answer: parsedAnswer ?? answer.output,
+        multimedia: {
+          images: [],
+          videos: [],
+          audios: [],
+          documents: [],
+        },
+      },
     };
   }
 
@@ -69,4 +132,6 @@ export class DictionaryService {
     }
     return 'summary';
   }
+
+  
 }

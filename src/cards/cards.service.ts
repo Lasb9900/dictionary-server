@@ -1423,4 +1423,9 @@ export class CardsService {
       throw new Error(`Transaction failed: ${error.message}`);
     }
   }
+
+  async findByIdRaw(id: string) {
+  return this.cardModel.findById(id).lean();
+}
+
 }
