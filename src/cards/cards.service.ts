@@ -276,128 +276,149 @@ export class CardsService {
   }
 
   async updateAuthorCardAndSetPendingReview(
-    id: string,
-    updateCardDto: UpdateAuthorCardDto,
-    options: CardsAiOptions = {},
-  ): Promise<Card> {
-    try {
-      const aiOptions = {
-        providerOverride: options.providerOverride,
-      };
+  id: string,
+  updateCardDto: UpdateAuthorCardDto,
+  options: CardsAiOptions = {},
+): Promise<Card> {
+  try {
+    const aiOptions = {
+      providerOverride: options.providerOverride,
+    };
 
-      // Generate Author Text
-      const authorPrompt = `${userSummaryPrompt}\n\n${JSON.stringify({
-        fullName: updateCardDto.fullName,
-        gender: updateCardDto.gender,
-        pseudonym: updateCardDto.pseudonym,
-        dateOfBirth: updateCardDto.dateOfBirth,
-        dateOfDeath: updateCardDto.dateOfDeath,
-        placeOfBirth: updateCardDto.placeOfBirth,
-        placeOfDeath: updateCardDto.placeOfDeath,
-        relatives: updateCardDto.relatives,
-        relevantActivities: updateCardDto.relevantActivities,
-        mainTheme: updateCardDto.mainTheme,
-        mainGenre: updateCardDto.mainGenre,
-        context: updateCardDto.context,
-      })}`;
-      const authorTextResult = await this.aiService.generateText(
-        authorPrompt,
-        aiOptions,
-      );
+    // ✅ Defaults defensivos (para que nunca explote con undefined)
+    updateCardDto.relatives = updateCardDto.relatives ?? [];
+    updateCardDto.relevantActivities = updateCardDto.relevantActivities ?? '';
+    updateCardDto.mainTheme = updateCardDto.mainTheme ?? '';
+    updateCardDto.mainGenre = updateCardDto.mainGenre ?? '';
+    updateCardDto.context = updateCardDto.context ?? '';
+    updateCardDto.works = updateCardDto.works ?? [];
+    updateCardDto.criticism = updateCardDto.criticism ?? [];
 
-      // Generate Works Text
-      const worksSummaries = await Promise.all(
-        updateCardDto.works.map(async (work) => {
-          const worksPrompt = `${workSummaryPrompt}\n\n${JSON.stringify({
-            author: updateCardDto.fullName,
-            title: work.title,
-            originalLanguage: work.originalLanguage,
-            genre: work.genre,
-            publicationDate: work.publicationDate,
+    // Asegurar ediciones dentro de works
+    updateCardDto.works = updateCardDto.works.map((w: any) => ({
+      ...w,
+      editions: w?.editions ?? [],
+    }));
+
+    // 1) Generate Author Text
+    const authorPrompt = `${userSummaryPrompt}\n\n${JSON.stringify({
+      fullName: updateCardDto.fullName,
+      gender: updateCardDto.gender,
+      pseudonym: updateCardDto.pseudonym,
+      dateOfBirth: updateCardDto.dateOfBirth,
+      dateOfDeath: updateCardDto.dateOfDeath,
+      placeOfBirth: updateCardDto.placeOfBirth,
+      placeOfDeath: updateCardDto.placeOfDeath,
+      relatives: updateCardDto.relatives,
+      relevantActivities: updateCardDto.relevantActivities,
+      mainTheme: updateCardDto.mainTheme,
+      mainGenre: updateCardDto.mainGenre,
+      context: updateCardDto.context,
+    })}`;
+
+    const authorTextResult = await this.aiService.generateText(
+      authorPrompt,
+      aiOptions,
+    );
+
+    // 2) Generate Works Text (si no hay works, queda [])
+    const worksSummaries = await Promise.all(
+      (updateCardDto.works ?? []).map(async (work: any) => {
+        const worksPrompt = `${workSummaryPrompt}\n\n${JSON.stringify({
+          author: updateCardDto.fullName,
+          title: work?.title,
+          originalLanguage: work?.originalLanguage,
+          genre: work?.genre,
+          publicationDate: work?.publicationDate,
+          publicationPlace: {
+            city: work?.publicationPlace?.city,
+            printingHouse: work?.publicationPlace?.printingHouse,
+            publisher: work?.publicationPlace?.publisher,
+          },
+          editions: (work?.editions ?? []).map((edition: any) => ({
+            publicationDate: edition?.publicationDate,
+            editiontitle: edition?.editiontitle,
+            language: edition?.language,
+            translator: edition?.translator,
             publicationPlace: {
-              city: work.publicationPlace?.city,
-              printingHouse: work.publicationPlace?.printingHouse,
-              publisher: work.publicationPlace?.publisher,
+              city: edition?.publicationPlace?.city,
+              printingHouse: edition?.publicationPlace?.printingHouse,
+              publisher: edition?.publicationPlace?.publisher,
             },
-            editions: work.editions.map((edition) => ({
-              publicationDate: edition.publicationDate,
-              editiontitle: edition.editiontitle,
-              language: edition.language,
-              translator: edition.translator,
-              publicationPlace: {
-                city: edition.publicationPlace?.city,
-                printingHouse: edition.publicationPlace?.printingHouse,
-                publisher: edition.publicationPlace?.publisher,
-              },
-            })),
-            description: work.description,
-          })}`;
-          const worksTextResult = await this.aiService.generateText(
-            worksPrompt,
-            aiOptions,
-          );
-          return worksTextResult.output;
-        }),
-      );
+          })),
+          description: work?.description,
+        })}`;
 
-      // Generate Criticism Text
-      const criticismsSummaries = await Promise.all(
-        updateCardDto.criticism.map(async (criticism) => {
-          const criticismPrompt = `${criticismSummary}\n\n${JSON.stringify({
-            title: criticism.title,
-            type: criticism.type,
-            author: criticism.author,
-            publicationDate: criticism.publicationDate,
-            link: criticism.link,
-            bibliographicReference: criticism.bibliographicReference,
-            description: criticism.description,
-            text: criticism.text,
-          })}`;
-          const criticismTextResult = await this.aiService.generateText(
-            criticismPrompt,
-            aiOptions,
-          );
-          return criticismTextResult.output;
-        }),
-      );
+        const worksTextResult = await this.aiService.generateText(
+          worksPrompt,
+          aiOptions,
+        );
+        return worksTextResult.output;
+      }),
+    );
 
-      updateCardDto.text = authorTextResult.output;
+    // 3) Generate Criticism Text (si no hay criticism, queda [])
+    const criticismsSummaries = await Promise.all(
+      (updateCardDto.criticism ?? []).map(async (crit: any) => {
+        const criticismPrompt = `${criticismSummary}\n\n${JSON.stringify({
+          title: crit?.title,
+          type: crit?.type,
+          author: crit?.author,
+          publicationDate: crit?.publicationDate,
+          link: crit?.link,
+          bibliographicReference: crit?.bibliographicReference,
+          description: crit?.description,
+          text: crit?.text,
+        })}`;
 
-      updateCardDto.works.forEach((work, index) => {
-        work.text = worksSummaries[index];
-      });
+        const criticismTextResult = await this.aiService.generateText(
+          criticismPrompt,
+          aiOptions,
+        );
+        return criticismTextResult.output;
+      }),
+    );
 
-      updateCardDto.criticism.forEach((criticism, index) => {
-        criticism.text = criticismsSummaries[index];
-      });
+    // 4) Persistir textos generados en el DTO
+    updateCardDto.text = authorTextResult.output;
 
-      const updatedCard = await this.authorCardModel.findByIdAndUpdate(
-        id,
-        {
-          ...updateCardDto,
-          status: CardStatus.PENDING_REVIEW,
-        },
-        {
-          new: true,
-          runValidators: true,
-        },
-      );
+    (updateCardDto.works ?? []).forEach((work: any, index: number) => {
+      work.text = worksSummaries[index] ?? work.text ?? '';
+    });
 
-      if (!updatedCard) {
-        throw new Error('Card not found');
-      }
+    (updateCardDto.criticism ?? []).forEach((crit: any, index: number) => {
+      crit.text = criticismsSummaries[index] ?? crit.text ?? '';
+    });
 
-      return updatedCard;
-    } catch (error) {
-      console.error(
-        'Error updating card and setting status to pending review:',
-        error,
-      );
-      throw new Error(
-        'Failed to update card and set status. Please try again later.',
-      );
+    // 5) Guardar y setear status Pending Review
+    const updatedCard = await this.authorCardModel.findByIdAndUpdate(
+      id,
+      {
+        ...updateCardDto,
+        status: CardStatus.PENDING_REVIEW,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!updatedCard) {
+      throw new Error('Card not found');
     }
+
+    return updatedCard;
+  } catch (error) {
+    console.error(
+      'Error updating card and setting status to pending review:',
+      error,
+    );
+    throw new Error(
+      'Failed to update card and set status. Please try again later.',
+    );
   }
+}
+
 
   async updateMagazineCardAndSetPendingReview(
     id: string,
