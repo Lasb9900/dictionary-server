@@ -7,7 +7,7 @@ export const EnvConfiguration = () => ({
     ? Number(process.env.AI_TEMPERATURE)
     : 0,
   geminiApiKey: process.env.GEMINI_API_KEY,
-  geminiModel: process.env.GEMINI_MODEL ?? 'gemini-1.5-flash',
+  geminiModel: process.env.GEMINI_MODEL ?? 'gemini-2.0-flash',
   ollamaBaseUrl: process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434',
   ollamaModel: process.env.OLLAMA_MODEL ?? 'llama3.1',
   aiTestMode: process.env.AI_TEST_MODE === 'true',

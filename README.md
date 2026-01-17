@@ -44,6 +44,11 @@ MONGODB_URI=mongodb://localhost:27017/dictionary?replicaSet=rs0
 # JWT
 JWT_SECRET=super-secret
 
+# Neo4j
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=neo4j-password
+
 # AI
 AI_PROVIDER=ollama # o gemini
 AI_TEMPERATURE=0
@@ -55,7 +60,7 @@ OLLAMA_MODEL=llama3.1
 
 # Gemini
 GEMINI_API_KEY=your-key
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-2.0-flash
 ```
 
 ## IA: endpoints rápidos
@@ -86,6 +91,13 @@ curl -X POST http://localhost:8080/api/ai/test \
 ```
 
 ## Auth (JWT)
+
+### Register
+```bash
+curl -X POST http://localhost:8080/api/users/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "user@example.com", "password": "password", "fullName": "Usuario Demo" }'
+```
 
 ### Login
 ```bash

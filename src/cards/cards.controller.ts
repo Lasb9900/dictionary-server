@@ -269,6 +269,11 @@ export class CardsController {
     return this.cardsService.findAllRejectedCards();
   }
 
+  @Get(':id')
+  async findOneCard(@Param('id') id: string): Promise<Card> {
+    return this.cardsService.findOneById(id);
+  }
+
   @Post('/save-texts/author/:id')
   async saveCardTexts(@Param('id') id: string, @Body() body): Promise<Card> {
     return this.cardsService.saveAuthorCardTexts(
