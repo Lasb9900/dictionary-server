@@ -4,7 +4,11 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AiGenerateInput, AiProvider } from '../interfaces/ai-provider.interface';
+import {
+  AiEmbedInput,
+  AiGenerateInput,
+  AiProvider,
+} from '../interfaces/ai-provider.interface';
 
 @Injectable()
 export class OllamaProvider implements AiProvider {
@@ -85,5 +89,47 @@ export class OllamaProvider implements AiProvider {
     }
 
     return payload.response;
+  }
+
+  async embedText(input: AiEmbedInput): Promise<number[]> {
+    const baseUrl = this.configService.get<string>('ollamaBaseUrl');
+    if (!baseUrl) {
+      throw new ServiceUnavailableException(
+        'OLLAMA_BASE_URL is not configured.',
+      );
+    }
+
+    const model =
+      input.model ??
+      this.configService.get<string>('ollamaEmbedModel') ??
+      'nomic-embed-text';
+
+    const response = await fetch(`${baseUrl}/api/embeddings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        prompt: input.text,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new BadGatewayException(
+        `Ollama embedding failed (${response.status}): ${errorText}`,
+      );
+    }
+
+    const payload = await response.json();
+    const embedding = payload?.embedding;
+    if (!Array.isArray(embedding)) {
+      throw new BadGatewayException(
+        'Ollama embedding response did not include embedding.',
+      );
+    }
+
+    return embedding;
   }
 }

@@ -7,9 +7,15 @@ export interface AiGenerateInput {
   model?: string;
 }
 
+export interface AiEmbedInput {
+  text: string;
+  model?: string;
+}
+
 export interface AiProvider {
   name: AiProviderName;
   generateText(input: AiGenerateInput): Promise<string>;
+  embedText(input: AiEmbedInput): Promise<number[]>;
   isConfigured(): boolean;
   isReachable?(): Promise<boolean>;
 }

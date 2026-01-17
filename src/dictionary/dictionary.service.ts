@@ -87,7 +87,7 @@ export class DictionaryService {
     const type: DictionaryEnvelopeType = this.resolveType(query);
 
     if (type === 'model') {
-      const result = await this.aiService.generateText(
+      const result = await this.aiService.generateWithFallback(
         'Describe el modelo y proveedor en uso para este entorno.',
         { providerOverride },
       );

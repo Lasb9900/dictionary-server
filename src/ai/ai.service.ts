@@ -2,12 +2,14 @@ import {
   BadGatewayException,
   BadRequestException,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AI_PROVIDERS } from './ai.constants';
 import { Inject } from '@nestjs/common';
 import {
+  AiEmbedInput,
   AiGenerateInput,
   AiProvider,
   AiProviderName,
@@ -23,6 +25,7 @@ export interface AiGenerateOptions {
 @Injectable()
 export class AiService {
   private readonly providerMap: Map<AiProviderName, AiProvider>;
+  private readonly logger = new Logger(AiService.name);
 
   constructor(
     private readonly configService: ConfigService,
@@ -36,7 +39,7 @@ export class AiService {
 
   getDefaultProviderName(): AiProviderName {
     const configured = this.configService
-      .get<string>('aiProvider', 'ollama')
+      .get<string>('aiProvider', 'gemini')
       .toLowerCase();
 
     if (configured === 'gemini' || configured === 'ollama') {
@@ -97,6 +100,73 @@ export class AiService {
     };
   }
 
+  async generateWithFallback(
+    prompt: string,
+    options: AiGenerateOptions = {},
+  ): Promise<{
+    output: string;
+    providerUsed: AiProviderName;
+    latencyMs: number;
+  }> {
+    const primary = this.resolveProviderName(options.providerOverride);
+    const fallback: AiProviderName = primary === 'gemini' ? 'ollama' : 'gemini';
+
+    try {
+      return await this.generateText(prompt, {
+        ...options,
+        providerOverride: primary,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Primary AI provider failed (${primary}). Falling back to ${fallback}.`,
+      );
+    }
+
+    try {
+      return await this.generateText(prompt, {
+        ...options,
+        providerOverride: fallback,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Fallback AI provider failed (${fallback}).`,
+        error?.stack,
+      );
+      throw new BadGatewayException('AI provider unavailable');
+    }
+  }
+
+  async embed(
+    text: string,
+    options: { providerOverride?: AiProviderName; model?: string } = {},
+  ): Promise<{ vector: number[] | null; providerUsed?: AiProviderName }> {
+    const sanitized = text.trim().slice(0, 4000);
+    if (!sanitized) {
+      return { vector: null };
+    }
+
+    const primary = this.resolveProviderName(options.providerOverride);
+    const fallback: AiProviderName = primary === 'gemini' ? 'ollama' : 'gemini';
+    const input: AiEmbedInput = { text: sanitized, model: options.model };
+
+    try {
+      const vector = await this.embedWithProvider(primary, input);
+      return { vector, providerUsed: primary };
+    } catch (error) {
+      this.logger.warn(
+        `Primary embedding provider failed (${primary}). Falling back to ${fallback}.`,
+      );
+    }
+
+    try {
+      const vector = await this.embedWithProvider(fallback, input);
+      return { vector, providerUsed: fallback };
+    } catch (error) {
+      this.logger.warn(`Embedding providers unavailable. Skipping embedding.`);
+      return { vector: null };
+    }
+  }
+
   async getHealth() {
     const defaultProvider = this.getDefaultProviderName();
     const geminiProvider = this.providerMap.get('gemini');
@@ -148,5 +218,16 @@ export class AiService {
         'Ollama is not reachable at OLLAMA_BASE_URL.',
       );
     }
+  }
+
+  private async embedWithProvider(
+    providerName: AiProviderName,
+    input: AiEmbedInput,
+  ): Promise<number[]> {
+    const provider = this.providerMap.get(providerName);
+    if (!provider) {
+      throw new BadRequestException(`Unsupported AI provider: ${providerName}`);
+    }
+    return provider.embedText(input);
   }
 }

@@ -332,7 +332,7 @@ export class CardsService {
       context: updateCardDto.context,
     })}`;
 
-    const authorTextResult = await this.aiService.generateText(
+    const authorTextResult = await this.aiService.generateWithFallback(
       authorPrompt,
       aiOptions,
     );
@@ -365,7 +365,7 @@ export class CardsService {
           description: work?.description,
         })}`;
 
-        const worksTextResult = await this.aiService.generateText(
+        const worksTextResult = await this.aiService.generateWithFallback(
           worksPrompt,
           aiOptions,
         );
@@ -387,7 +387,7 @@ export class CardsService {
           text: crit?.text,
         })}`;
 
-        const criticismTextResult = await this.aiService.generateText(
+        const criticismTextResult = await this.aiService.generateWithFallback(
           criticismPrompt,
           aiOptions,
         );
@@ -464,7 +464,7 @@ export class CardsService {
         sections: updateCardDto.sections,
         description: updateCardDto.description,
       })}`;
-      const magazineDescriptionResult = await this.aiService.generateText(
+      const magazineDescriptionResult = await this.aiService.generateWithFallback(
         magazinePrompt,
         aiOptions,
       );
@@ -480,7 +480,7 @@ export class CardsService {
             bibliographicReference: criticism.bibliographicReference,
             description: criticism.description,
           })}`;
-          const criticismTextResult = await this.aiService.generateText(
+          const criticismTextResult = await this.aiService.generateWithFallback(
             criticismPrompt,
             aiOptions,
           );
@@ -545,7 +545,7 @@ export class CardsService {
         },
         description: updateCardDto.description,
       })}`;
-      const anthologyDescriptionResult = await this.aiService.generateText(
+      const anthologyDescriptionResult = await this.aiService.generateWithFallback(
         anthologyPrompt,
         aiOptions,
       );
@@ -561,7 +561,7 @@ export class CardsService {
             bibliographicReference: criticism.bibliographicReference,
             description: criticism.description,
           })}`;
-          const criticismTextResult = await this.aiService.generateText(
+          const criticismTextResult = await this.aiService.generateWithFallback(
             criticismPrompt,
             aiOptions,
           );
@@ -633,7 +633,7 @@ export class CardsService {
         ),
         groupActivities: updateCardDto.groupActivities,
       })}`;
-      const groupDescriptionResult = await this.aiService.generateText(
+      const groupDescriptionResult = await this.aiService.generateWithFallback(
         groupPrompt,
         aiOptions,
       );
@@ -650,7 +650,7 @@ export class CardsService {
             description: criticism.description,
             text: criticism.text,
           })}`;
-          const criticismTextResult = await this.aiService.generateText(
+          const criticismTextResult = await this.aiService.generateWithFallback(
             criticismPrompt,
             aiOptions,
           );
@@ -714,7 +714,7 @@ export class CardsService {
         mainTheme: updateCardDto.mainTheme,
         description: updateCardDto.description,
       })}`;
-      const mythLegendDescriptionResult = await this.aiService.generateText(
+      const mythLegendDescriptionResult = await this.aiService.generateWithFallback(
         mythLegendPrompt,
         aiOptions,
       );
@@ -732,7 +732,7 @@ export class CardsService {
             description: criticism.description,
             text: criticism.text,
           })}`;
-          const criticismTextResult = await this.aiService.generateText(
+          const criticismTextResult = await this.aiService.generateWithFallback(
             criticismPrompt,
             aiOptions,
           );
@@ -801,6 +801,17 @@ export class CardsService {
 
       await this.queryRepository.deleteCardNodes(id);
 
+      const worksWithEmbeddings = await Promise.all(
+        (updatedCard.works ?? []).map(async (work: any) => {
+          const text = work?.description ?? work?.title ?? '';
+          const { vector } = await this.aiService.embed(text);
+          return {
+            ...work,
+            embedding: vector ?? null,
+          };
+        }),
+      );
+
       await this.queryRepository.createAuthorCardNodes({
         fullName:
           updatedCard.fullName && updatedCard.fullName !== ''
@@ -845,7 +856,7 @@ export class CardsService {
             ? updatedCard.context
             : null,
         multimedia: updatedCard.multimedia ? updatedCard.multimedia : [],
-        works: updatedCard.works ? updatedCard.works : [],
+        works: worksWithEmbeddings,
         criticism: updatedCard.criticism ? updatedCard.criticism : [],
         gender:
           updatedCard.gender &&
@@ -855,7 +866,6 @@ export class CardsService {
         text:
           updatedCard.text && updatedCard.text !== '' ? updatedCard.text : null,
         id,
-        openAiApiKey: process.env.OPENAI_API_KEY,
       });
 
       await session.commitTransaction();
