@@ -66,7 +66,7 @@ export class DictionaryService {
       question,
     ].join('\n');
 
-    const response = await this.aiService.generateWithFallback(prompt, {
+    const response = await this.aiService.generateText(prompt, {
       providerOverride,
     });
 
@@ -130,9 +130,7 @@ export class DictionaryService {
       query,
     ].join('\n');
 
-    const answer = await this.aiService.generateWithFallback(prompt, {
-      providerOverride,
-    });
+    const answer = await this.aiService.generateText(prompt, { providerOverride });
 
     // 5) Si pidió JSON, intentamos parsear para devolver objeto real
     let parsedAnswer: any = null;
