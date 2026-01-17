@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AuthorCard } from './entities/author.entity';
@@ -68,6 +72,14 @@ export class CardsService {
       console.error('Error getting card:', error);
       throw new Error('Failed to get card. Please try again later.');
     }
+  }
+
+  async findOneById(id: string): Promise<Card> {
+    const card = await this.cardModel.findById(id).exec();
+    if (!card) {
+      throw new NotFoundException('Card not found.');
+    }
+    return card;
   }
 
   async createCard(createCardDto: CreateCardDto): Promise<Card> {

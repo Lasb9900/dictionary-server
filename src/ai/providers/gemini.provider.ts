@@ -19,7 +19,9 @@ export class GeminiProvider implements AiProvider {
     }
 
     const model =
-      input.model ?? this.configService.get<string>('geminiModel') ?? 'gemini-1.5-flash';
+      input.model ??
+      this.configService.get<string>('geminiModel') ??
+      'gemini-2.0-flash';
     const temperature =
       input.temperature ??
       this.configService.get<number>('aiTemperature') ??
@@ -52,6 +54,17 @@ export class GeminiProvider implements AiProvider {
 
     if (!response.ok) {
       const errorText = await response.text();
+      const normalized = errorText.toLowerCase();
+      if (
+        response.status === 404 ||
+        normalized.includes('model') ||
+        normalized.includes('not found') ||
+        normalized.includes('model_not_found')
+      ) {
+        throw new BadRequestException(
+          `Gemini model "${model}" is not available. Check GEMINI_MODEL.`,
+        );
+      }
       throw new BadRequestException(
         `Gemini request failed (${response.status}): ${errorText}`,
       );
